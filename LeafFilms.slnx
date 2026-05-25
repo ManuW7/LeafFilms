@@ -7,4 +7,7 @@
     <Project Path="services/SocialService/SocialService.csproj" />
     <Project Path="services/UserService/UserService.csproj" />
   </Folder>
+  <Folder Name="/Элементы решения/">
+    <File Path="docker-compose.dev.yml" />
+  </Folder>
 </Solution>

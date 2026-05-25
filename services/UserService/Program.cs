@@ -1,71 +1,101 @@
-// services/UserService/Program.cs
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using Serilog;
+using Serilog.Formatting.Compact;
 using System.Text;
+using UserService.Data;
+using UserService.Middleware;
+using UserService.Repositories;
+using UserService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Serilog (structured JSON logging) ──────────────────────────────
+// ── Serilog ──────────────────────────────────────────────────────────────────
 builder.Host.UseSerilog((ctx, cfg) =>
     cfg.ReadFrom.Configuration(ctx.Configuration)
        .Enrich.WithProperty("Service", "user-service")
+       .Enrich.FromLogContext()
        .WriteTo.Console(new CompactJsonFormatter()));
 
-// ── EF Core ────────────────────────────────────────────────────────
+// ── EF Core / PostgreSQL ─────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
-// ── JWT Authentication ─────────────────────────────────────────────
+// ── JWT ───────────────────────────────────────────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt => {
+    .AddJwtBearer(opt =>
+    {
         opt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
         };
     });
 
 builder.Services.AddAuthorization();
+
+// ── Application Services ─────────────────────────────────────────────────────
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserService, UserAppService>();
+
+// ── Controllers & Swagger ────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
-// ── Swagger с JWT ──────────────────────────────────────────────────
-builder.Services.AddSwaggerGen(c => {
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "UserService", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        Description = "Вставь токен: Bearer {token}"
     });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement { { ... } });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
+
+// ── Health Checks ─────────────────────────────────────────────────────────────
+builder.Services.AddHealthChecks().AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
 
 var app = builder.Build();
 
-// ── Auto-run migrations ────────────────────────────────────────────
+// ── Auto-migration ────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
-    scope.ServiceProvider.GetRequiredService<AppDbContext>()
-         .Database.Migrate();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
 }
 
-// ── Middleware ─────────────────────────────────────────────────────
-app.UseMiddleware<CorrelationIdMiddleware>();  // см. ниже
+// ── Middleware pipeline ───────────────────────────────────────────────────────
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "UserService v1"));
 app.MapControllers();
-app.MapHealthChecks("/health");  // health check endpoint
+app.MapHealthChecks("/health");
 
 app.Run();

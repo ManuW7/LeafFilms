@@ -1,4 +1,5 @@
 ﻿
+using UserService.Exceptions;
 
 using System.ComponentModel.DataAnnotations;
 
