@@ -31,3 +31,4 @@ C:\Program Files\LeafFilms\services\UserService\obj\Debug\net10.0\refint\UserSer
 C:\Program Files\LeafFilms\services\UserService\obj\Debug\net10.0\UserService.pdb
 C:\Program Files\LeafFilms\services\UserService\obj\Debug\net10.0\UserService.genruntimeconfig.cache
 C:\Program Files\LeafFilms\services\UserService\obj\Debug\net10.0\ref\UserService.dll
+C:\Program Files\LeafFilms\services\UserService\obj\Debug\net10.0\UserService.sourcelink.json

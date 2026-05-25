@@ -53,9 +53,51 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
+            "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Microsoft.AspNetCore.Diagnostics.HealthChecks": {
+              "target": "Package",
+              "version": "[2.2.0, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[10.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Polly.Extensions.Http": {
+              "target": "Package",
+              "version": "[3.*, )"
+            },
+            "RabbitMQ.Client": {
+              "target": "Package",
+              "version": "[6.*, )"
+            },
+            "Serilog.AspNetCore": {
+              "target": "Package",
+              "version": "[8.*, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[5.*, )"
+            },
+            "StackExchange.Redis": {
+              "target": "Package",
+              "version": "[2.*, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.*, )"
             }
           },
           "imports": [

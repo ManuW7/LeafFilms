@@ -1,3 +1,17 @@
 .env
 **/bin/
 **/obj/
+
+.vs/
+bin/
+obj/
+
+.idea/
+
+.vscode/
+
+*.user
+*.suo
+
+logs/
+*.log
