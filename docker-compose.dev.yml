@@ -4,9 +4,46 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: users
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: changeme
     ports:
       - "5432:5432"
+
+  catalogue-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: catalogue
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5433:5432"
+
+  review-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: reviews
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5434:5432"
+
+  social-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: social
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5435:5432"
+
+  activity-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: activity
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5436:5432"
 
   redis:
     image: redis:7-alpine
