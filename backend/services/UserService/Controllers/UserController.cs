@@ -23,12 +23,24 @@ public class UsersController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    /// <summary>Аутентификация — возвращает JWT</summary>
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginUserCommand cmd)
     {
         var result = await _userService.LoginAsync(cmd);
+        return Ok(result);
+    }
+
+    /// <summary>Поиск пользователей по username</summary>
+    [HttpGet("search")]
+    [Authorize]
+    public async Task<IActionResult> Search([FromQuery] string q)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+            return BadRequest("Query parameter 'q' is required.");
+        var result = await _userService.SearchAsync(q);
         return Ok(result);
     }
 
@@ -43,6 +55,7 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Профиль текущего авторизованного пользователя</summary>
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> Me()

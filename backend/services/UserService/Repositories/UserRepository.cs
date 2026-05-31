@@ -9,6 +9,7 @@ public interface IUserRepository
     Task<User?> GetByIdAsync(Guid id);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByUsernameAsync(string username);
+    Task<IEnumerable<User>> SearchAsync(string query); 
     Task<User> CreateAsync(User user);
     Task<User> UpdateAsync(User user);
     Task DeleteAsync(Guid id);
@@ -30,6 +31,13 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByUsernameAsync(string username)
         => await _db.Users.AsNoTracking()
                .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+
+    public async Task<IEnumerable<User>> SearchAsync(string query)
+        => await _db.Users.AsNoTracking()
+               .Where(u => EF.Functions.ILike(u.Username, $"%{query}%"))
+               .OrderBy(u => u.Username)
+               .Take(20)
+               .ToListAsync();
 
     public async Task<User> CreateAsync(User user)
     {

@@ -16,6 +16,19 @@ public class ReviewCreatedEvent
     public DateTime CreatedAt { get; set; }
 }
 
+public class ReviewUpdatedEvent
+{
+    public Guid MovieId { get; set; }
+    public int OldRating { get; set; }
+    public int NewRating { get; set; }
+}
+
+public class ReviewDeletedEvent
+{
+    public Guid MovieId { get; set; }
+    public int Rating { get; set; }
+}
+
 public interface IEventPublisher
 {
     Task PublishAsync<T>(string exchangeName, T @event);

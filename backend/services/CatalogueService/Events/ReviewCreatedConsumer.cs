@@ -16,6 +16,19 @@ public class ReviewCreatedEvent
     public DateTime CreatedAt { get; set; }
 }
 
+public class ReviewUpdatedEvent
+{
+    public Guid MovieId { get; set; }
+    public int OldRating { get; set; }
+    public int NewRating { get; set; }
+}
+
+public class ReviewDeletedEvent
+{
+    public Guid MovieId { get; set; }
+    public int Rating { get; set; }
+}
+
 public class ReviewCreatedConsumer : BackgroundService
 {
     private readonly IConfiguration _config;
@@ -23,9 +36,6 @@ public class ReviewCreatedConsumer : BackgroundService
     private readonly ILogger<ReviewCreatedConsumer> _logger;
     private IConnection? _connection;
     private IModel? _channel;
-
-    private const string ExchangeName = "review.created";
-    private const string QueueName = "catalogue.review.created";
 
     public ReviewCreatedConsumer(
         IConfiguration config,
@@ -52,84 +62,128 @@ public class ReviewCreatedConsumer : BackgroundService
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
 
-            _channel.ExchangeDeclare(ExchangeName, ExchangeType.Fanout, durable: true);
-            _channel.QueueDeclare(QueueName, durable: true, exclusive: false, autoDelete: false);
-            _channel.QueueBind(QueueName, ExchangeName, routingKey: string.Empty);
+            Subscribe("review.created", "catalogue.review.created", HandleReviewCreatedAsync);
+            Subscribe("review.updated", "catalogue.review.updated", HandleReviewUpdatedAsync);
+            Subscribe("review.deleted", "catalogue.review.deleted", HandleReviewDeletedAsync);
 
-            var consumer = new AsyncEventingBasicConsumer(_channel);
-            consumer.Received += HandleMessageAsync;
-
-            _channel.BasicConsume(QueueName, autoAck: false, consumer);
-            _logger.LogInformation("ReviewCreatedConsumer started, listening to {Queue}", QueueName);
+            _logger.LogInformation("ReviewConsumer started");
         }
         catch (Exception ex)
         {
-            // RabbitMQ может быть недоступен при локальной разработке — не падаем
             _logger.LogWarning(ex, "Could not connect to RabbitMQ. Rating updates will be unavailable.");
         }
 
         return Task.CompletedTask;
     }
 
-    private async Task HandleMessageAsync(object sender, BasicDeliverEventArgs ea)
+    private void Subscribe(string exchange, string queue, Func<string, Task> handler)
     {
-        var body = Encoding.UTF8.GetString(ea.Body.ToArray());
+        _channel!.ExchangeDeclare(exchange, ExchangeType.Fanout, durable: true);
+        _channel.QueueDeclare(queue, durable: true, exclusive: false, autoDelete: false);
+        _channel.QueueBind(queue, exchange, routingKey: string.Empty);
 
-        try
+        var consumer = new AsyncEventingBasicConsumer(_channel);
+        consumer.Received += async (_, ea) =>
         {
-            var evt = JsonSerializer.Deserialize<ReviewCreatedEvent>(body,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (evt is null)
+            var body = Encoding.UTF8.GetString(ea.Body.ToArray());
+            try
             {
-                _channel?.BasicAck(ea.DeliveryTag, false);
-                return;
+                await handler(body);
+                _channel.BasicAck(ea.DeliveryTag, false);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing message from {Exchange}", exchange);
+                _channel.BasicNack(ea.DeliveryTag, false, requeue: true);
+            }
+        };
 
-            _logger.LogInformation(
-                "Received ReviewCreated for movie {MovieId}, rating {Rating}",
-                evt.MovieId, evt.Rating);
-
-            await UpdateMovieRatingAsync(evt.MovieId, evt.Rating);
-
-            _channel?.BasicAck(ea.DeliveryTag, false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing ReviewCreated event: {Body}", body);
-            _channel?.BasicNack(ea.DeliveryTag, false, requeue: true);
-        }
+        _channel.BasicConsume(queue, autoAck: false, consumer);
     }
 
-    private async Task UpdateMovieRatingAsync(Guid movieId, int newRating)
+    private async Task HandleReviewCreatedAsync(string json)
     {
+        var evt = JsonSerializer.Deserialize<ReviewCreatedEvent>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (evt is null) return;
+
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var movie = await db.Movies.FirstOrDefaultAsync(m => m.Id == movieId);
-        if (movie is null)
-        {
-            _logger.LogWarning("Movie {MovieId} not found, skipping rating update", movieId);
-            return;
-        }
+        var movie = await db.Movies.FirstOrDefaultAsync(m => m.Id == evt.MovieId);
+        if (movie is null) return;
 
-        // Пересчёт среднего рейтинга: (старый_avg * кол-во + новый) / (кол-во + 1)
         movie.AverageRating = Math.Round(
-            (movie.AverageRating * movie.ReviewCount + newRating) / (movie.ReviewCount + 1.0),
-            2);
+            (movie.AverageRating * movie.ReviewCount + evt.Rating) / (movie.ReviewCount + 1.0), 2);
         movie.ReviewCount += 1;
 
         await db.SaveChangesAsync();
+        await InvalidateCacheAsync(scope, evt.MovieId);
 
-        // Инвалидируем кэш Redis
+        _logger.LogInformation("Movie {MovieId} rating updated to {Rating} ({Count} reviews)",
+            evt.MovieId, movie.AverageRating, movie.ReviewCount);
+    }
+
+    private async Task HandleReviewUpdatedAsync(string json)
+    {
+        var evt = JsonSerializer.Deserialize<ReviewUpdatedEvent>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (evt is null) return;
+
+        using var scope = _services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var movie = await db.Movies.FirstOrDefaultAsync(m => m.Id == evt.MovieId);
+        if (movie is null || movie.ReviewCount == 0) return;
+
+        // Пересчёт: убираем старый рейтинг, добавляем новый
+        movie.AverageRating = Math.Round(
+            (movie.AverageRating * movie.ReviewCount - evt.OldRating + evt.NewRating) / (double)movie.ReviewCount, 2);
+
+        await db.SaveChangesAsync();
+        await InvalidateCacheAsync(scope, evt.MovieId);
+
+        _logger.LogInformation("Movie {MovieId} rating recalculated to {Rating} after review update",
+            evt.MovieId, movie.AverageRating);
+    }
+
+    private async Task HandleReviewDeletedAsync(string json)
+    {
+        var evt = JsonSerializer.Deserialize<ReviewDeletedEvent>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (evt is null) return;
+
+        using var scope = _services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var movie = await db.Movies.FirstOrDefaultAsync(m => m.Id == evt.MovieId);
+        if (movie is null || movie.ReviewCount == 0) return;
+
+        if (movie.ReviewCount == 1)
+        {
+            movie.AverageRating = 0;
+            movie.ReviewCount = 0;
+        }
+        else
+        {
+            movie.AverageRating = Math.Round(
+                (movie.AverageRating * movie.ReviewCount - evt.Rating) / (movie.ReviewCount - 1.0), 2);
+            movie.ReviewCount -= 1;
+        }
+
+        await db.SaveChangesAsync();
+        await InvalidateCacheAsync(scope, evt.MovieId);
+
+        _logger.LogInformation("Movie {MovieId} rating recalculated to {Rating} after review deletion",
+            evt.MovieId, movie.AverageRating);
+    }
+
+    private static async Task InvalidateCacheAsync(IServiceScope scope, Guid movieId)
+    {
         var redis = scope.ServiceProvider.GetRequiredService<StackExchange.Redis.IConnectionMultiplexer>();
-        var redisDb = redis.GetDatabase();
-        await redisDb.KeyDeleteAsync("movies:all");
-        await redisDb.KeyDeleteAsync($"movie:{movieId}");
-
-        _logger.LogInformation(
-            "Movie {MovieId} rating updated: {Rating} ({Count} reviews)",
-            movieId, movie.AverageRating, movie.ReviewCount);
+        var db = redis.GetDatabase();
+        await db.KeyDeleteAsync("movies:all");
+        await db.KeyDeleteAsync($"movie:{movieId}");
     }
 
     public override void Dispose()

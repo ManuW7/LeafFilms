@@ -13,6 +13,7 @@ public interface IUserService
     Task<RegisterResponseDto> RegisterAsync(RegisterUserCommand cmd);
     Task<AuthResponseDto> LoginAsync(LoginUserCommand cmd);
     Task<UserProfileDto> GetByIdAsync(Guid id);
+    Task<IEnumerable<UserProfileDto>> SearchAsync(string query);
 }
 
 public class UserAppService : IUserService
@@ -87,6 +88,19 @@ public class UserAppService : IUserService
             Role = user.Role,
             CreatedAt = user.CreatedAt
         };
+    }
+
+    public async Task<IEnumerable<UserProfileDto>> SearchAsync(string query)
+    {
+        var users = await _repo.SearchAsync(query);
+        return users.Select(u => new UserProfileDto
+        {
+            Id = u.Id,
+            Username = u.Username,
+            Email = u.Email,
+            Role = u.Role,
+            CreatedAt = u.CreatedAt
+        });
     }
 
     private static string HashPassword(string password)

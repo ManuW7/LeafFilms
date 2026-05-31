@@ -50,11 +50,9 @@ public class ReviewAppService : IReviewService
         var userId = GetUserId(principal);
         var username = principal.FindFirst(ClaimTypes.Name)?.Value ?? "unknown";
 
-        // Проверяем, что фильм существует (через HttpClient с Polly)
         var movie = await _catalogue.GetMovieAsync(cmd.MovieId)
             ?? throw new NotFoundException("Movie", cmd.MovieId);
 
-        // Проверяем дубль
         if (await _repo.GetByUserAndMovieAsync(userId, cmd.MovieId) is not null)
             throw new ConflictException("You have already reviewed this movie.");
 
@@ -71,7 +69,6 @@ public class ReviewAppService : IReviewService
         var created = await _repo.CreateAsync(review);
         _logger.LogInformation("Review created: {ReviewId} by {UserId}", created.Id, userId);
 
-        // Публикуем событие в RabbitMQ
         await _publisher.PublishAsync("review.created", new ReviewCreatedEvent
         {
             ReviewId = created.Id,
@@ -96,11 +93,30 @@ public class ReviewAppService : IReviewService
         if (review.UserId != userId)
             throw new ForbiddenException("You can only edit your own reviews.");
 
+        var oldRating = review.Rating;
+
         if (cmd.Rating.HasValue) review.Rating = cmd.Rating.Value;
         if (cmd.Text is not null) review.Text = cmd.Text;
         review.UpdatedAt = DateTime.UtcNow;
 
-        return ToDto(await _repo.UpdateAsync(review));
+        var updated = await _repo.UpdateAsync(review);
+
+        // Публикуем событие только если рейтинг изменился
+        if (cmd.Rating.HasValue && oldRating != cmd.Rating.Value)
+        {
+            await _publisher.PublishAsync("review.updated", new ReviewUpdatedEvent
+            {
+                MovieId = review.MovieId,
+                OldRating = oldRating,
+                NewRating = cmd.Rating.Value
+            });
+
+            _logger.LogInformation(
+                "Review {ReviewId} rating changed from {OldRating} to {NewRating}",
+                id, oldRating, cmd.Rating.Value);
+        }
+
+        return ToDto(updated);
     }
 
     public async Task DeleteAsync(Guid id, ClaimsPrincipal principal)
@@ -114,6 +130,14 @@ public class ReviewAppService : IReviewService
             throw new ForbiddenException("You can only delete your own reviews.");
 
         await _repo.DeleteAsync(id);
+
+        await _publisher.PublishAsync("review.deleted", new ReviewDeletedEvent
+        {
+            MovieId = review.MovieId,
+            Rating = review.Rating
+        });
+
+        _logger.LogInformation("Review {ReviewId} deleted, rating {Rating} removed", id, review.Rating);
     }
 
     private static Guid GetUserId(ClaimsPrincipal principal)
