@@ -1,0 +1,34 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ReviewService.DTOs;
+
+public class ReviewDto
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public Guid MovieId { get; set; }
+    public string MovieTitle { get; set; } = string.Empty;
+    public int Rating { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public int LikesCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class CreateReviewCommand
+{
+    [Required]
+    public Guid MovieId { get; set; }
+
+    [Required, Range(1, 10)]
+    public int Rating { get; set; }
+
+    [Required, MinLength(10), MaxLength(2000)]
+    public string Text { get; set; } = string.Empty;
+}
+
+public class UpdateReviewCommand
+{
+    [Range(1, 10)] public int? Rating { get; set; }
+    [MinLength(10), MaxLength(2000)] public string? Text { get; set; }
+}
