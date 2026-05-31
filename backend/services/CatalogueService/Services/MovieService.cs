@@ -39,14 +39,11 @@ public class MovieService : IMovieService
         var cached = await db.StringGetAsync(key);
         if (cached.HasValue)
         {
-            _logger.LogDebug("Cache hit for movies:all");
-            return JsonSerializer.Deserialize<IEnumerable<MovieDto>>(cached!.ToString());
+            return JsonSerializer.Deserialize<IEnumerable<MovieDto>>((string)cached!)!;
         }
 
-        _logger.LogDebug("Cache miss, fetching from database");
         var movies = await _repo.GetAllAsync();
         var dtos = movies.Select(ToDto).ToList();
-
         await db.StringSetAsync(key, JsonSerializer.Serialize(dtos), CacheTtl);
         return dtos;
     }
@@ -59,8 +56,7 @@ public class MovieService : IMovieService
         var cached = await db.StringGetAsync(key);
         if (cached.HasValue)
         {
-            _logger.LogDebug("Cache hit for {Key}", key);
-            return JsonSerializer.Deserialize<MovieDto>(cached!.ToString());
+            return JsonSerializer.Deserialize<MovieDto>((string)cached!)!;
         }
 
         var movie = await _repo.GetByIdAsync(id)
