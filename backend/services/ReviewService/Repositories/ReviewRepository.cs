@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ReviewService.Data;
+using ReviewService.Exceptions;
 using ReviewService.Models;
 
 namespace ReviewService.Repositories;
@@ -14,7 +15,11 @@ public interface IReviewRepository
     Task<Review> UpdateAsync(Review review);
     Task DeleteAsync(Guid id);
     Task DeleteManyAsync(IEnumerable<Review> reviews);
+    Task<ReviewReaction?> GetReactionAsync(Guid reviewId, Guid userId);
+    Task<ReviewReactionDtoState> SetReactionAsync(Guid reviewId, Guid userId, int value);
 }
+
+public record ReviewReactionDtoState(int LikesCount, int DislikesCount, int MyReaction);
 
 public class ReviewRepository : IReviewRepository
 {
@@ -56,5 +61,43 @@ public class ReviewRepository : IReviewRepository
     {
         _db.Reviews.RemoveRange(reviews);
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<ReviewReaction?> GetReactionAsync(Guid reviewId, Guid userId)
+        => await _db.ReviewReactions.AsNoTracking()
+               .FirstOrDefaultAsync(r => r.ReviewId == reviewId && r.UserId == userId);
+
+    public async Task<ReviewReactionDtoState> SetReactionAsync(Guid reviewId, Guid userId, int value)
+    {
+        var review = await _db.Reviews.FirstOrDefaultAsync(r => r.Id == reviewId)
+            ?? throw new NotFoundException("Review", reviewId);
+
+        var existing = await _db.ReviewReactions
+            .FirstOrDefaultAsync(r => r.ReviewId == reviewId && r.UserId == userId);
+
+        if (existing is not null)
+        {
+            if (existing.Value == 1) review.LikesCount = Math.Max(0, review.LikesCount - 1);
+            if (existing.Value == -1) review.DislikesCount = Math.Max(0, review.DislikesCount - 1);
+
+            if (value == 0)
+            {
+                _db.ReviewReactions.Remove(existing);
+            }
+            else
+            {
+                existing.Value = value;
+            }
+        }
+        else if (value != 0)
+        {
+            _db.ReviewReactions.Add(new ReviewReaction { ReviewId = reviewId, UserId = userId, Value = value });
+        }
+
+        if (value == 1) review.LikesCount += 1;
+        if (value == -1) review.DislikesCount += 1;
+
+        await _db.SaveChangesAsync();
+        return new ReviewReactionDtoState(review.LikesCount, review.DislikesCount, value);
     }
 }

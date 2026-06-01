@@ -19,6 +19,7 @@ function MovieCard({ movie, onClick }: { movie: Movie; onClick: () => void }) {
       </div>
       <div className="movie-card__body">
         <h3 className="movie-card__title">{movie.title}</h3>
+        {movie.titleRu && <p className="movie-card__title-ru">{movie.titleRu}</p>}
         <div className="movie-card__badges">
           <Badge>{movie.year}</Badge>
           <Badge>{movie.genre}</Badge>
@@ -46,6 +47,7 @@ export default function MoviesPage() {
   const [searching, setSearching] = useState(false)
   const [newMovie, setNewMovie] = useState({
     title: '',
+    titleRu: '',
     year: '',
     genre: '',
     director: '',
@@ -74,6 +76,7 @@ export default function MoviesPage() {
     e.preventDefault()
     const created = await apiFetch<Movie>('POST', '/movies', {
       title: newMovie.title,
+      titleRu: newMovie.titleRu,
       year: Number(newMovie.year),
       genre: newMovie.genre,
       director: newMovie.director,
@@ -81,7 +84,7 @@ export default function MoviesPage() {
       posterUrl: newMovie.posterUrl,
     })
     setMovies(m => [created, ...m])
-    setNewMovie({ title: '', year: '', genre: '', director: '', description: '', posterUrl: '' })
+    setNewMovie({ title: '', titleRu: '', year: '', genre: '', director: '', description: '', posterUrl: '' })
     navigate(`/movies/${created.id}`)
   }
 
@@ -95,7 +98,7 @@ export default function MoviesPage() {
           <p className="movies-page__count">{movies.length} фильмов</p>
         </div>
         <div className="movies-page__search">
-          <Input placeholder="Поиск по названию, режиссёру..." value={query}
+          <Input placeholder="Поиск по русскому или английскому названию..." value={query}
             onChange={e => handleSearch(e.target.value)} />
         </div>
       </div>
@@ -105,6 +108,7 @@ export default function MoviesPage() {
           <h2>Добавить фильм</h2>
           <div className="movies-admin-create__grid">
             <input value={newMovie.title} onChange={e => setNewMovie(f => ({ ...f, title: e.target.value }))} placeholder="Название" required />
+            <input value={newMovie.titleRu} onChange={e => setNewMovie(f => ({ ...f, titleRu: e.target.value }))} placeholder="Название на русском" />
             <input value={newMovie.year} onChange={e => setNewMovie(f => ({ ...f, year: e.target.value }))} placeholder="Год" type="number" required />
             <input value={newMovie.genre} onChange={e => setNewMovie(f => ({ ...f, genre: e.target.value }))} placeholder="Жанр" required />
             <input value={newMovie.director} onChange={e => setNewMovie(f => ({ ...f, director: e.target.value }))} placeholder="Режиссер" required />

@@ -35,6 +35,9 @@ namespace ReviewService.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int>("DislikesCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("LikesCount")
                         .HasColumnType("integer");
 
@@ -73,6 +76,43 @@ namespace ReviewService.Migrations
                         .IsUnique();
 
                     b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("ReviewService.Models.ReviewReaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ReviewId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Value")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ReviewReactions");
+                });
+
+            modelBuilder.Entity("ReviewService.Models.ReviewReaction", b =>
+                {
+                    b.HasOne("ReviewService.Models.Review", "Review")
+                        .WithMany()
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
                 });
 #pragma warning restore 612, 618
         }

@@ -81,6 +81,7 @@ public class MovieService : IMovieService
         var movie = new Movie
         {
             Title = cmd.Title,
+            TitleRu = cmd.TitleRu,
             Year = cmd.Year,
             Genre = cmd.Genre,
             Director = cmd.Director,
@@ -99,6 +100,7 @@ public class MovieService : IMovieService
             ?? throw new NotFoundException("Movie", id);
 
         if (cmd.Title is not null) movie.Title = cmd.Title;
+        if (cmd.TitleRu is not null) movie.TitleRu = string.IsNullOrWhiteSpace(cmd.TitleRu) ? null : cmd.TitleRu;
         if (cmd.Year.HasValue) movie.Year = cmd.Year.Value;
         if (cmd.Genre is not null) movie.Genre = cmd.Genre;
         if (cmd.Director is not null) movie.Director = cmd.Director;
@@ -129,6 +131,7 @@ public class MovieService : IMovieService
     {
         Id = m.Id,
         Title = m.Title,
+        TitleRu = m.TitleRu,
         Year = m.Year,
         Genre = m.Genre,
         Director = m.Director,

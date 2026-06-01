@@ -20,6 +20,8 @@ public class ReviewCreatedEvent
     public int Rating { get; set; }
     public string Text { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public int LikesCount { get; set; }
+    public int DislikesCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -36,6 +38,14 @@ public class ReviewDeletedEvent
 {
     public Guid ReviewId { get; set; }
     public Guid UserId { get; set; }
+}
+
+public class ReviewReactionUpdatedEvent
+{
+    public Guid ReviewId { get; set; }
+    public Guid UserId { get; set; }
+    public int LikesCount { get; set; }
+    public int DislikesCount { get; set; }
 }
 
 // ── Consumer background service ───────────────────────────────────────────────
@@ -76,6 +86,7 @@ public class FeedEventConsumer : BackgroundService
 
         SubscribeToExchange("review.created", "feed.review.created", HandleReviewCreatedAsync);
         SubscribeToExchange("review.deleted", "feed.review.deleted", HandleReviewDeletedAsync);
+        SubscribeToExchange("review.reaction.updated", "feed.review.reaction.updated", HandleReviewReactionUpdatedAsync);
         SubscribeToExchange("movie.watched", "feed.movie.watched", HandleMovieWatchedAsync);
 
         _logger.LogInformation("FeedEventConsumer started, listening to RabbitMQ");
@@ -134,6 +145,8 @@ public class FeedEventConsumer : BackgroundService
             ExtraText = evt.Text,
             ImageUrl = evt.ImageUrl,
             Rating = evt.Rating,
+            LikesCount = evt.LikesCount,
+            DislikesCount = evt.DislikesCount,
             CreatedAt = evt.CreatedAt
         };
 
@@ -205,6 +218,32 @@ public class FeedEventConsumer : BackgroundService
         {
             type = "review_deleted",
             reviewId = evt.ReviewId
+        });
+    }
+
+    private async Task HandleReviewReactionUpdatedAsync(string json)
+    {
+        var evt = JsonSerializer.Deserialize<ReviewReactionUpdatedEvent>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (evt is null) return;
+
+        using var scope = _services.CreateScope();
+        var feedService = scope.ServiceProvider.GetRequiredService<IFeedService>();
+        var socialClient = scope.ServiceProvider.GetRequiredService<ISocialClient>();
+
+        var followerIds = (await socialClient.GetFollowerIdsAsync(evt.UserId)).ToList();
+        await feedService.UpdateReviewReactionInFeedsAsync(
+            evt.ReviewId,
+            followerIds,
+            evt.LikesCount,
+            evt.DislikesCount);
+
+        await _wsManager.BroadcastToUsersAsync(followerIds, new
+        {
+            type = "review_reaction_updated",
+            reviewId = evt.ReviewId,
+            likesCount = evt.LikesCount,
+            dislikesCount = evt.DislikesCount
         });
     }
 

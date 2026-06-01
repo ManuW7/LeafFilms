@@ -17,6 +17,7 @@ export interface AuthResponse {
 export interface Movie {
   id: string
   title: string
+  titleRu?: string
   year: number
   genre: string
   director: string
@@ -36,6 +37,7 @@ export interface Review {
   text: string
   imageUrl?: string
   likesCount: number
+  dislikesCount: number
   createdAt: string
 }
 
@@ -92,17 +94,28 @@ export interface FeedItem {
   extraText?: string
   imageUrl?: string
   rating?: number
+  likesCount: number
+  dislikesCount: number
   createdAt: string
 }
 
 export interface WsMessage {
-  type: 'review_created' | 'movie_watched' | 'review_deleted'
+  type: 'review_created' | 'movie_watched' | 'review_deleted' | 'review_reaction_updated'
   reviewId?: string
   actorName?: string
   movieId?: string
   movieTitle?: string
   imageUrl?: string
   rating?: number
+  likesCount?: number
+  dislikesCount?: number
   createdAt?: string
   watchedAt?: string
+}
+
+export interface ReviewReaction {
+  reviewId: string
+  likesCount: number
+  dislikesCount: number
+  myReaction: -1 | 0 | 1
 }

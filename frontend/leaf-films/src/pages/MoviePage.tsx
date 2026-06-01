@@ -11,6 +11,39 @@ import Spinner from '../components/ui/Spinner'
 import Toast from '../components/ui/Toast'
 import './MoviePage.css'
 
+const allowedImageExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif']
+const maxImageSide = 4096
+
+async function validateReviewImage(url: string): Promise<string> {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+
+  let parsed: URL
+  try {
+    parsed = new URL(trimmed)
+  } catch {
+    return 'Ссылка на изображение должна быть корректным URL.'
+  }
+
+  const extension = parsed.pathname.split('.').pop()?.toLowerCase() || ''
+  if (!allowedImageExtensions.includes(extension)) {
+    return 'Поддерживаются только изображения JPG, PNG, WEBP или GIF.'
+  }
+
+  return new Promise(resolve => {
+    const image = new Image()
+    image.onload = () => {
+      if (image.naturalWidth > maxImageSide || image.naturalHeight > maxImageSide) {
+        resolve(`Изображение слишком большое: максимум ${maxImageSide}x${maxImageSide}px.`)
+      } else {
+        resolve('')
+      }
+    }
+    image.onerror = () => resolve('Не удалось загрузить изображение по этой ссылке.')
+    image.src = trimmed
+  })
+}
+
 function ReviewCard({ review, canDelete, onDelete }: {
   review: Review
   canDelete: boolean
@@ -81,6 +114,7 @@ export default function MoviePage() {
   const [newPlaylistName, setNewPlaylistName] = useState('')
   const [adminForm, setAdminForm] = useState({
     title: '',
+    titleRu: '',
     year: '',
     genre: '',
     director: '',
@@ -98,6 +132,7 @@ export default function MoviePage() {
       setReviews(reviewsData)
       setAdminForm({
         title: movieData.title,
+        titleRu: movieData.titleRu || '',
         year: String(movieData.year),
         genre: movieData.genre,
         director: movieData.director,
@@ -178,6 +213,7 @@ export default function MoviePage() {
     try {
       const updated = await apiFetch<Movie>('PUT', `/movies/${movie.id}`, {
         title: adminForm.title,
+        titleRu: adminForm.titleRu,
         year: Number(adminForm.year),
         genre: adminForm.genre,
         director: adminForm.director,
@@ -209,6 +245,12 @@ export default function MoviePage() {
       return
     }
     if (!id) return
+
+    const imageError = await validateReviewImage(form.imageUrl)
+    if (imageError) {
+      setReviewError(imageError)
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -244,6 +286,7 @@ export default function MoviePage() {
             <Badge>{movie.genre}</Badge>
           </div>
           <h1 className="movie-page__title">{movie.title}</h1>
+          {movie.titleRu && <p className="movie-page__title-alt">{movie.titleRu}</p>}
           <p className="movie-page__director">Режиссер: <strong>{movie.director}</strong></p>
           {movie.reviewCount > 0 && (
             <div className="movie-page__rating">
@@ -286,6 +329,7 @@ export default function MoviePage() {
           <h2>Управление фильмом</h2>
           <div className="admin-movie-panel__grid">
             <input value={adminForm.title} onChange={e => setAdminForm(f => ({ ...f, title: e.target.value }))} placeholder="Название" />
+            <input value={adminForm.titleRu} onChange={e => setAdminForm(f => ({ ...f, titleRu: e.target.value }))} placeholder="Название на русском" />
             <input value={adminForm.year} onChange={e => setAdminForm(f => ({ ...f, year: e.target.value }))} placeholder="Год" type="number" />
             <input value={adminForm.genre} onChange={e => setAdminForm(f => ({ ...f, genre: e.target.value }))} placeholder="Жанр" />
             <input value={adminForm.director} onChange={e => setAdminForm(f => ({ ...f, director: e.target.value }))} placeholder="Режиссер" />

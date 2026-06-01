@@ -14,6 +14,7 @@
   line-height: 1.2;
   margin-bottom: 0.5rem;
 }
+.movie-page__title-alt { color: var(--accent); font-size: 1.05rem; margin: -0.2rem 0 0.7rem; }
 .movie-page__director { color: var(--text-2); font-size: 1rem; margin-bottom: 1rem; }
 .movie-page__director strong { color: var(--text); }
 .movie-page__rating {

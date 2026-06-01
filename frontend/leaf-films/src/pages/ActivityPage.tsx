@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
-import type { Movie, Playlist, WatchHistoryItem, WatchlistItem } from '../types'
+import type { Movie, Playlist, Review, WatchHistoryItem, WatchlistItem } from '../types'
+import { useAuthStore } from '../store/authStore'
 import Button from '../components/ui/Button'
 import Spinner from '../components/ui/Spinner'
 import Toast from '../components/ui/Toast'
@@ -11,12 +12,14 @@ type Tab = 'history' | 'watchlist' | 'playlists'
 
 export default function ActivityPage() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [tab, setTab] = useState<Tab>('history')
   const [history, setHistory] = useState<WatchHistoryItem[]>([])
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([])
   const [playlists, setPlaylists] = useState<Playlist[]>([])
-  const [movies, setMovies] = useState<Movie[]>([])
-  const [selectedMovieByPlaylist, setSelectedMovieByPlaylist] = useState<Record<string, string>>({})
+  const [reviewsByMovie, setReviewsByMovie] = useState<Record<string, number>>({})
+  const [movieSearchByPlaylist, setMovieSearchByPlaylist] = useState<Record<string, string>>({})
+  const [movieResultsByPlaylist, setMovieResultsByPlaylist] = useState<Record<string, Movie[]>>({})
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [newPlaylistName, setNewPlaylistName] = useState('')
@@ -27,14 +30,14 @@ export default function ActivityPage() {
       apiFetch<WatchHistoryItem[]>('GET', '/history'),
       apiFetch<WatchlistItem[]>('GET', '/watchlist'),
       apiFetch<Playlist[]>('GET', '/playlists'),
-      apiFetch<Movie[]>('GET', '/movies'),
-    ]).then(([historyData, watchlistData, playlistsData, moviesData]) => {
+      user ? apiFetch<Review[]>('GET', `/reviews/user/${user.id}`) : Promise.resolve([]),
+    ]).then(([historyData, watchlistData, playlistsData, reviewsData]) => {
       setHistory(historyData)
       setWatchlist(watchlistData)
       setPlaylists(playlistsData)
-      setMovies(moviesData)
+      setReviewsByMovie(Object.fromEntries(reviewsData.map(review => [review.movieId, review.rating])))
     }).finally(() => setLoading(false))
-  }, [])
+  }, [user])
 
   const handleRemoveWatchlist = async (movieId: string) => {
     await apiFetch('DELETE', `/watchlist/${movieId}`)
@@ -61,19 +64,24 @@ export default function ActivityPage() {
     setPlaylists(p => p.filter(x => x.id !== id))
   }
 
-  const handleAddMovieToPlaylist = async (playlistId: string) => {
-    const movieId = selectedMovieByPlaylist[playlistId]
-    const movie = movies.find(m => m.id === movieId)
-    if (!movie) {
-      setToast({ msg: 'Выберите фильм', type: 'error' })
+  const handleSearchMovieForPlaylist = async (playlistId: string, query: string) => {
+    setMovieSearchByPlaylist(state => ({ ...state, [playlistId]: query }))
+    if (query.trim().length < 2) {
+      setMovieResultsByPlaylist(state => ({ ...state, [playlistId]: [] }))
       return
     }
+    const results = await apiFetch<Movie[]>('GET', `/movies/search?q=${encodeURIComponent(query)}`)
+    setMovieResultsByPlaylist(state => ({ ...state, [playlistId]: results }))
+  }
 
+  const handleAddMovieToPlaylist = async (playlistId: string, movie: Movie) => {
     try {
       await apiFetch('POST', `/playlists/${playlistId}/movies`, { movieId: movie.id, movieTitle: movie.title })
       setPlaylists(items => items.map(pl => pl.id === playlistId && !pl.movies.some(m => m.movieId === movie.id)
         ? { ...pl, movies: [...pl.movies, { movieId: movie.id, movieTitle: movie.title, addedAt: new Date().toISOString() }] }
         : pl))
+      setMovieSearchByPlaylist(state => ({ ...state, [playlistId]: '' }))
+      setMovieResultsByPlaylist(state => ({ ...state, [playlistId]: [] }))
       setToast({ msg: 'Фильм добавлен в плейлист', type: 'success' })
     } catch {
       setToast({ msg: 'Не удалось добавить фильм', type: 'error' })
@@ -113,6 +121,9 @@ export default function ActivityPage() {
                 <span className="activity-item__title">{item.movieTitle}</span>
               </div>
               <span className="activity-item__date">{new Date(item.watchedAt).toLocaleDateString('ru-RU')}</span>
+              {reviewsByMovie[item.movieId] && (
+                <span className="activity-item__rating">{'★'.repeat(reviewsByMovie[item.movieId])}</span>
+              )}
             </div>
           ))}
         </div>
@@ -159,16 +170,24 @@ export default function ActivityPage() {
                   <Button variant="ghost" size="sm" onClick={() => handleDeletePlaylist(pl.id)} style={{ color: 'var(--danger)' }}>Удалить</Button>
                 </div>
                 <div className="playlist-card__add">
-                  <select
-                    value={selectedMovieByPlaylist[pl.id] || ''}
-                    onChange={e => setSelectedMovieByPlaylist(state => ({ ...state, [pl.id]: e.target.value }))}
-                  >
-                    <option value="">Выберите фильм</option>
-                    {movies
-                      .filter(movie => !pl.movies.some(item => item.movieId === movie.id))
-                      .map(movie => <option key={movie.id} value={movie.id}>{movie.title}</option>)}
-                  </select>
-                  <Button variant="secondary" size="sm" onClick={() => handleAddMovieToPlaylist(pl.id)}>Добавить</Button>
+                  <input
+                    value={movieSearchByPlaylist[pl.id] || ''}
+                    onChange={e => handleSearchMovieForPlaylist(pl.id, e.target.value)}
+                    placeholder="Найти фильм по русскому или английскому названию..."
+                  />
+                  {(movieResultsByPlaylist[pl.id] || []).length > 0 && (
+                    <div className="playlist-card__search-results">
+                      {(movieResultsByPlaylist[pl.id] || [])
+                        .filter(movie => !pl.movies.some(item => item.movieId === movie.id))
+                        .slice(0, 6)
+                        .map(movie => (
+                          <button key={movie.id} onClick={() => handleAddMovieToPlaylist(pl.id, movie)}>
+                            <span>{movie.title}</span>
+                            {movie.titleRu && <small>{movie.titleRu}</small>}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
                 {pl.movies.length > 0 && (
                   <div className="playlist-card__movies">

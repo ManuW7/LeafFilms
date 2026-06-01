@@ -81,6 +81,27 @@
   border: 1px solid var(--border);
   margin-top: 0.75rem;
 }
+.feed-card__reactions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+.feed-card__reactions button {
+  border: 1px solid var(--border);
+  background: rgba(143, 227, 136, 0.06);
+  color: var(--text-2);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  transition: border-color var(--transition), box-shadow var(--transition), color var(--transition);
+}
+.feed-card__reactions button:hover,
+.feed-card__reaction--active {
+  border-color: var(--accent) !important;
+  color: var(--text) !important;
+  box-shadow: 0 0 18px rgba(143, 227, 136, 0.16);
+}
 .feed-card__date { font-size: 0.75rem; color: var(--text-3); margin-top: 0.5rem; }
 .feed-card__icon {
   width: 32px;
