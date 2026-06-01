@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master", "develop"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore backend/LeafFilms.slnx
+
+      - name: Build
+        run: dotnet build backend/LeafFilms.slnx --configuration Release --no-restore
+
+  frontend:
+    name: Frontend lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/leaf-films/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend/leaf-films
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend/leaf-films
+        run: npm run lint
+
+      - name: Build
+        working-directory: frontend/leaf-films
+        run: npm run build
+
+  compose:
+    name: Docker Compose config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare local env
+        run: cp .env.example .env
+
+      - name: Validate compose file
+        run: docker compose config --quiet

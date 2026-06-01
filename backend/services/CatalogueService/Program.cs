@@ -73,7 +73,6 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
-    // Seed data
     if (!db.Movies.Any())
     {
         db.Movies.AddRange(

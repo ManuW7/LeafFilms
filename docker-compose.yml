@@ -4,8 +4,8 @@ services:
     container_name: cinegram-postgres-users
     environment:
       POSTGRES_DB: users
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - pgdata-users:/var/lib/postgresql/data
     healthcheck:
@@ -19,8 +19,8 @@ services:
     container_name: cinegram-postgres-catalogue
     environment:
       POSTGRES_DB: catalogue
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - pgdata-catalogue:/var/lib/postgresql/data
     healthcheck:
@@ -34,8 +34,8 @@ services:
     container_name: cinegram-postgres-reviews
     environment:
       POSTGRES_DB: reviews
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - pgdata-reviews:/var/lib/postgresql/data
     healthcheck:
@@ -49,8 +49,8 @@ services:
     container_name: cinegram-postgres-social
     environment:
       POSTGRES_DB: social
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - pgdata-social:/var/lib/postgresql/data
     healthcheck:
@@ -64,8 +64,8 @@ services:
     container_name: cinegram-postgres-activity
     environment:
       POSTGRES_DB: activity
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - pgdata-activity:/var/lib/postgresql/data
     healthcheck:
@@ -90,8 +90,8 @@ services:
     image: rabbitmq:3-management
     container_name: cinegram-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
     ports:
       - "15672:15672"
     volumes:
@@ -107,11 +107,12 @@ services:
       context: ./backend/services/UserService
       dockerfile: Dockerfile
     container_name: cinegram-user-service
+    restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
-      Admin__SetupSecret: "change-me-admin-setup-secret"
-      ConnectionStrings__Default: "Host=user-db;Port=5432;Database=users;Username=postgres;Password=changeme"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
+      Admin__SetupSecret: ${ADMIN_SETUP_SECRET:?ADMIN_SETUP_SECRET is required}
+      ConnectionStrings__Default: "Host=user-db;Port=5432;Database=users;Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
     depends_on:
       user-db:
         condition: service_healthy
@@ -127,14 +128,15 @@ services:
       context: ./backend/services/CatalogueService
       dockerfile: Dockerfile
     container_name: cinegram-catalogue-service
+    restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
-      ConnectionStrings__Default: "Host=catalogue-db;Port=5432;Database=catalogue;Username=postgres;Password=changeme"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
+      ConnectionStrings__Default: "Host=catalogue-db;Port=5432;Database=catalogue;Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
       Redis__ConnectionString: "redis:6379"
       RabbitMQ__Host: rabbitmq
-      RabbitMQ__User: admin
-      RabbitMQ__Pass: admin123
+      RabbitMQ__User: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RabbitMQ__Pass: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
     depends_on:
       catalogue-db:
         condition: service_healthy
@@ -154,14 +156,15 @@ services:
       context: ./backend/services/ReviewService
       dockerfile: Dockerfile
     container_name: cinegram-review-service
+    restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
-      ConnectionStrings__Default: "Host=review-db;Port=5432;Database=reviews;Username=postgres;Password=changeme"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
+      ConnectionStrings__Default: "Host=review-db;Port=5432;Database=reviews;Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
       Services__Catalogue: "http://catalogue-service:8080"
       RabbitMQ__Host: rabbitmq
-      RabbitMQ__User: admin
-      RabbitMQ__Pass: admin123
+      RabbitMQ__User: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RabbitMQ__Pass: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
     depends_on:
       review-db:
         condition: service_healthy
@@ -181,10 +184,11 @@ services:
       context: ./backend/services/SocialService
       dockerfile: Dockerfile
     container_name: cinegram-social-service
+    restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
-      ConnectionStrings__Default: "Host=social-db;Port=5432;Database=social;Username=postgres;Password=changeme"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
+      ConnectionStrings__Default: "Host=social-db;Port=5432;Database=social;Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
     depends_on:
       social-db:
         condition: service_healthy
@@ -200,13 +204,14 @@ services:
       context: ./backend/services/ActivityService
       dockerfile: Dockerfile
     container_name: cinegram-activity-service
+    restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
-      ConnectionStrings__Default: "Host=activity-db;Port=5432;Database=activity;Username=postgres;Password=changeme"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
+      ConnectionStrings__Default: "Host=activity-db;Port=5432;Database=activity;Username=${POSTGRES_USER:?POSTGRES_USER is required};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
       RabbitMQ__Host: rabbitmq
-      RabbitMQ__User: admin
-      RabbitMQ__Pass: admin123
+      RabbitMQ__User: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RabbitMQ__Pass: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
     depends_on:
       activity-db:
         condition: service_healthy
@@ -224,14 +229,15 @@ services:
       context: ./backend/services/FeedService
       dockerfile: Dockerfile
     container_name: cinegram-feed-service
+    restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required}
       Redis__ConnectionString: "redis:6379"
       Services__Social: "http://social-service:8080"
       RabbitMQ__Host: rabbitmq
-      RabbitMQ__User: admin
-      RabbitMQ__Pass: admin123
+      RabbitMQ__User: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RabbitMQ__Pass: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
     depends_on:
       redis:
         condition: service_healthy
@@ -247,13 +253,13 @@ services:
       start_period: 30s
 
   nginx:
-    image: nginx:1.25-alpine
+    build:
+      context: .
+      dockerfile: backend/nginx/Dockerfile
     container_name: cinegram-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
-    volumes:
-      - ./backend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend/leaf-films/dist:/usr/share/nginx/html:ro
     depends_on:
       user-service:
         condition: service_started
