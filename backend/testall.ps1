@@ -1,0 +1,235 @@
+﻿$base5001 = "http://localhost:5001"
+$base5002 = "http://localhost:5002"
+$base5003 = "http://localhost:5003"
+$base5004 = "http://localhost:5004"
+$base5005 = "http://localhost:5005"
+$base5006 = "http://localhost:5006"
+
+# ─────────────────────────────────────────────────────────────
+# 1. UserService
+# ─────────────────────────────────────────────────────────────
+
+# Регистрация двух пользователей
+Invoke-RestMethod "$base5001/users/register" -Method Post -ContentType "application/json" `
+    -Body '{"username":"alice","email":"alice@test.com","password":"Password123!"}'
+
+Invoke-RestMethod "$base5001/users/register" -Method Post -ContentType "application/json" `
+    -Body '{"username":"bob","email":"bob@test.com","password":"Password123!"}'
+
+# Логин
+$alice = Invoke-RestMethod "$base5001/users/login" -Method Post -ContentType "application/json" `
+    -Body '{"email":"alice@test.com","password":"Password123!"}'
+$aliceH = @{ Authorization = "Bearer $($alice.token)" }
+
+$bob = Invoke-RestMethod "$base5001/users/login" -Method Post -ContentType "application/json" `
+    -Body '{"email":"bob@test.com","password":"Password123!"}'
+$bobH = @{ Authorization = "Bearer $($bob.token)" }
+
+# Профиль
+Invoke-RestMethod "$base5001/users/me" -Headers $aliceH
+# → должен вернуть профиль alice
+
+# Поиск пользователей
+Invoke-RestMethod "$base5001/users/search?q=bob" -Headers $aliceH
+# → должен вернуть bob
+
+Write-Host "✅ UserService OK"
+
+# ─────────────────────────────────────────────────────────────
+# 2. CatalogueService
+# ─────────────────────────────────────────────────────────────
+
+# Список фильмов (публичный)
+$movies = Invoke-RestMethod "$base5002/movies"
+Write-Host "Фильмов в каталоге: $($movies.Count)"
+# → должно быть 5
+
+$movieId = $movies[0].id
+
+# Поиск
+Invoke-RestMethod "$base5002/movies/search?q=nolan"
+# → 3 фильма Нолана
+
+# Фильм по ID
+Invoke-RestMethod "$base5002/movies/$movieId"
+
+# Создать фильм (нужен admin-токен — сначала смени роль через DBeaver)
+# $newMovie = Invoke-RestMethod "$base5002/movies" -Method Post -Headers $adminH `
+#     -ContentType "application/json" `
+#     -Body '{"title":"Oppenheimer","year":2023,"genre":"Drama","director":"Nolan"}'
+
+Write-Host "✅ CatalogueService OK"
+
+# ─────────────────────────────────────────────────────────────
+# 3. ReviewService
+# ─────────────────────────────────────────────────────────────
+
+# Написать отзыв от Alice
+$review = Invoke-RestMethod "$base5003/reviews" -Method Post -Headers $aliceH `
+    -ContentType "application/json" `
+    -Body (@{ movieId = $movieId; rating = 8; text = "Отличный фильм, смотрел несколько раз!" } | ConvertTo-Json)
+
+Write-Host "Создан отзыв: $($review.id)"
+
+# Написать отзыв от Bob
+Invoke-RestMethod "$base5003/reviews" -Method Post -Headers $bobH `
+    -ContentType "application/json" `
+    -Body (@{ movieId = $movieId; rating = 10; text = "Шедевр! Лучший фильм всех времён." } | ConvertTo-Json)
+
+# Подождать пока CatalogueService обработает события
+Start-Sleep -Seconds 2
+
+# Проверить что рейтинг обновился в каталоге
+$updatedMovie = Invoke-RestMethod "$base5002/movies/$movieId"
+Write-Host "Рейтинг фильма: $($updatedMovie.averageRating) ($($updatedMovie.reviewCount) отзывов)"
+# → должно быть ~9.0 (среднее от 8 и 10), reviewCount = 2
+
+# Список отзывов к фильму
+Invoke-RestMethod "$base5003/reviews/movie/$movieId"
+
+# Попытка написать второй отзыв от Alice → должно быть 409
+try {
+    Invoke-RestMethod "$base5003/reviews" -Method Post -Headers $aliceH `
+        -ContentType "application/json" `
+        -Body (@{ movieId = $movieId; rating = 5; text = "Второй отзыв" } | ConvertTo-Json)
+} catch {
+    Write-Host "Дубль отзыва: $($_.Exception.Response.StatusCode)"
+    # → Conflict (409)
+}
+
+# Обновить оценку Alice
+Invoke-RestMethod "$base5003/reviews/$($review.id)" -Method Put -Headers $aliceH `
+    -ContentType "application/json" `
+    -Body '{"rating": 9}'
+
+Start-Sleep -Seconds 2
+
+$updatedMovie2 = Invoke-RestMethod "$base5002/movies/$movieId"
+Write-Host "Рейтинг после обновления: $($updatedMovie2.averageRating)"
+# → должно быть ~9.5 (среднее от 9 и 10)
+
+# Несуществующий фильм → 404
+try {
+    Invoke-RestMethod "$base5003/reviews" -Method Post -Headers $aliceH `
+        -ContentType "application/json" `
+        -Body (@{ movieId = [guid]::NewGuid(); rating = 5; text = "Текст отзыва здесь" } | ConvertTo-Json)
+} catch {
+    Write-Host "Несуществующий фильм: $($_.Exception.Response.StatusCode)"
+    # → NotFound (404)
+}
+
+Write-Host "✅ ReviewService OK"
+
+# ─────────────────────────────────────────────────────────────
+# 4. SocialService
+# ─────────────────────────────────────────────────────────────
+
+# Alice подписывается на Bob
+Invoke-RestMethod "$base5004/follow" -Method Post -Headers $aliceH `
+    -ContentType "application/json" `
+    -Body (@{ followedId = $bob.id } | ConvertTo-Json)
+# → 201
+
+# Попытка подписаться повторно → 409
+try {
+    Invoke-RestMethod "$base5004/follow" -Method Post -Headers $aliceH `
+        -ContentType "application/json" `
+        -Body (@{ followedId = $bob.id } | ConvertTo-Json)
+} catch {
+    Write-Host "Повторная подписка: $($_.Exception.Response.StatusCode)"
+    # → Conflict (409)
+}
+
+# Попытка подписаться на себя → 400
+try {
+    Invoke-RestMethod "$base5004/follow" -Method Post -Headers $aliceH `
+        -ContentType "application/json" `
+        -Body (@{ followedId = $alice.id } | ConvertTo-Json)
+} catch {
+    Write-Host "Подписка на себя: $($_.Exception.Response.StatusCode)"
+    # → BadRequest (400)
+}
+
+# Подписчики Bob'а
+$followers = Invoke-RestMethod "$base5004/users/$($bob.id)/followers"
+Write-Host "Подписчики Bob: $($followers.Count)"
+# → 1 (alice)
+
+# Подписки Alice
+$following = Invoke-RestMethod "$base5004/users/$($alice.id)/following"
+Write-Host "Подписки Alice: $($following.Count)"
+# → 1 (bob)
+
+Write-Host "✅ SocialService OK"
+
+# ─────────────────────────────────────────────────────────────
+# 5. ActivityService
+# ─────────────────────────────────────────────────────────────
+
+# Добавить в историю просмотров
+Invoke-RestMethod "$base5005/history" -Method Post -Headers $aliceH `
+    -ContentType "application/json" `
+    -Body (@{ movieId = $movieId; movieTitle = $movies[0].title } | ConvertTo-Json)
+# → 201, событие movie.watched уйдёт в RabbitMQ
+
+# История просмотров
+$history = Invoke-RestMethod "$base5005/history" -Headers $aliceH
+Write-Host "История Alice: $($history.Count) фильм(ов)"
+# → 1
+
+# Добавить в вишлист
+Invoke-RestMethod "$base5005/watchlist" -Method Post -Headers $aliceH `
+    -ContentType "application/json" `
+    -Body (@{ movieId = $movies[1].id; movieTitle = $movies[1].title } | ConvertTo-Json)
+
+# Повторно → 409
+try {
+    Invoke-RestMethod "$base5005/watchlist" -Method Post -Headers $aliceH `
+        -ContentType "application/json" `
+        -Body (@{ movieId = $movies[1].id; movieTitle = $movies[1].title } | ConvertTo-Json)
+} catch {
+    Write-Host "Дубль в вишлисте: $($_.Exception.Response.StatusCode)"
+    # → Conflict (409)
+}
+
+# Вишлист
+$watchlist = Invoke-RestMethod "$base5005/watchlist" -Headers $aliceH
+Write-Host "Вишлист Alice: $($watchlist.Count) фильм(ов)"
+
+# Удалить из вишлиста
+Invoke-RestMethod "$base5005/watchlist/$($movies[1].id)" -Method Delete -Headers $aliceH
+$watchlistAfter = Invoke-RestMethod "$base5005/watchlist" -Headers $aliceH
+Write-Host "Вишлист после удаления: $($watchlistAfter.Count)"
+# → 0
+
+# Создать плейлист
+$playlist = Invoke-RestMethod "$base5005/playlists" -Method Post -Headers $aliceH `
+    -ContentType "application/json" `
+    -Body '{"name":"Любимые фильмы"}'
+
+# Добавить фильм в плейлист
+Invoke-RestMethod "$base5005/playlists/$($playlist.id)/movies" -Method Post -Headers $aliceH `
+    -ContentType "application/json" `
+    -Body (@{ movieId = $movieId; movieTitle = $movies[0].title } | ConvertTo-Json)
+
+# Плейлист с фильмами
+$playlistFull = Invoke-RestMethod "$base5005/playlists/$($playlist.id)" -Headers $aliceH
+Write-Host "Плейлист '$($playlistFull.name)': $($playlistFull.movies.Count) фильм(ов)"
+# → 1
+
+Write-Host "✅ ActivityService OK"
+
+# ─────────────────────────────────────────────────────────────
+# 6. FeedService — лента
+# ─────────────────────────────────────────────────────────────
+
+# Подождать пока FeedService обработает все события
+Start-Sleep -Seconds 3
+
+# Лента Alice (должны быть события от Bob — его отзыв)
+$feed = Invoke-RestMethod "$base5006/feed" -Headers $aliceH
+Write-Host "Лента Alice: $($feed.Count) событий"
+$feed | ForEach-Object { Write-Host "  - $($_.eventType): $($_.movieTitle)" }
+# → должен быть review_created от Bob
+
+Write-Host "✅ FeedService HTTP OK"
