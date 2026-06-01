@@ -29,7 +29,6 @@ public class MovieRepository : IMovieRepository
     public async Task<IEnumerable<Movie>> SearchAsync(string query)
         => await _db.Movies.AsNoTracking()
                .Where(m => EF.Functions.ILike(m.Title, $"%{query}%")
-                        || (m.TitleRu != null && EF.Functions.ILike(m.TitleRu, $"%{query}%"))
                         || EF.Functions.ILike(m.Director, $"%{query}%")
                         || EF.Functions.ILike(m.Genre, $"%{query}%"))
                .ToListAsync();

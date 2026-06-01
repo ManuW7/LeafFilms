@@ -16,7 +16,6 @@ public interface IReviewService
     Task<ReviewDto> UpdateAsync(Guid id, UpdateReviewCommand cmd, ClaimsPrincipal user);
     Task DeleteAsync(Guid id, ClaimsPrincipal user);
     Task DeleteByMovieAsync(Guid movieId);
-    Task<ReviewReactionDto> SetReactionAsync(Guid reviewId, ReviewReactionCommand cmd, ClaimsPrincipal user);
 }
 
 public class ReviewAppService : IReviewService
@@ -82,8 +81,6 @@ public class ReviewAppService : IReviewService
             Rating = created.Rating,
             Text = created.Text,
             ImageUrl = created.ImageUrl,
-            LikesCount = created.LikesCount,
-            DislikesCount = created.DislikesCount,
             CreatedAt = created.CreatedAt
         });
 
@@ -170,32 +167,6 @@ public class ReviewAppService : IReviewService
         _logger.LogInformation("Deleted {Count} reviews for movie {MovieId}", reviews.Count, movieId);
     }
 
-    public async Task<ReviewReactionDto> SetReactionAsync(Guid reviewId, ReviewReactionCommand cmd, ClaimsPrincipal principal)
-    {
-        var userId = GetUserId(principal);
-        var value = Math.Clamp(cmd.Value, -1, 1);
-        var result = await _repo.SetReactionAsync(reviewId, userId, value);
-
-        var review = await _repo.GetByIdAsync(reviewId)
-            ?? throw new NotFoundException("Review", reviewId);
-
-        await _publisher.PublishAsync("review.reaction.updated", new ReviewReactionUpdatedEvent
-        {
-            ReviewId = reviewId,
-            UserId = review.UserId,
-            LikesCount = result.LikesCount,
-            DislikesCount = result.DislikesCount
-        });
-
-        return new ReviewReactionDto
-        {
-            ReviewId = reviewId,
-            LikesCount = result.LikesCount,
-            DislikesCount = result.DislikesCount,
-            MyReaction = result.MyReaction
-        };
-    }
-
     private static Guid GetUserId(ClaimsPrincipal principal)
     {
         var claim = principal.FindFirst(ClaimTypes.NameIdentifier)
@@ -215,7 +186,6 @@ public class ReviewAppService : IReviewService
         Text = r.Text,
         ImageUrl = r.ImageUrl,
         LikesCount = r.LikesCount,
-        DislikesCount = r.DislikesCount,
         CreatedAt = r.CreatedAt
     };
 }

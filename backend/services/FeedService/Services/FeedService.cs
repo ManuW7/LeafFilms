@@ -10,7 +10,6 @@ public interface IFeedService
     Task PushToFeedAsync(Guid userId, FeedItem item);
     Task PushToManyAsync(IEnumerable<Guid> userIds, FeedItem item);
     Task RemoveReviewFromFeedsAsync(Guid reviewId, IEnumerable<Guid> userIds);
-    Task UpdateReviewReactionInFeedsAsync(Guid reviewId, IEnumerable<Guid> userIds, int likesCount, int dislikesCount);
 }
 
 public class RedisFeedService : IFeedService
@@ -76,29 +75,6 @@ public class RedisFeedService : IFeedService
                 {
                     await db.ListRemoveAsync(key, value);
                 }
-            }
-        }
-    }
-
-    public async Task UpdateReviewReactionInFeedsAsync(Guid reviewId, IEnumerable<Guid> userIds, int likesCount, int dislikesCount)
-    {
-        var db = _redis.GetDatabase();
-        foreach (var userId in userIds.Distinct())
-        {
-            var key = $"feed:{userId}";
-            var values = await db.ListRangeAsync(key);
-
-            for (var i = 0; i < values.Length; i++)
-            {
-                var value = values[i];
-                if (!value.HasValue) continue;
-
-                var item = JsonSerializer.Deserialize<FeedItem>(value!);
-                if (item?.ReviewId != reviewId) continue;
-
-                item.LikesCount = likesCount;
-                item.DislikesCount = dislikesCount;
-                await db.ListSetByIndexAsync(key, i, JsonSerializer.Serialize(item));
             }
         }
     }

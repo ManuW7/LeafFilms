@@ -14,8 +14,6 @@ public class ReviewCreatedEvent
     public int Rating { get; set; }
     public string Text { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
-    public int LikesCount { get; set; }
-    public int DislikesCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -32,14 +30,6 @@ public class ReviewDeletedEvent
     public Guid UserId { get; set; }
     public Guid MovieId { get; set; }
     public int Rating { get; set; }
-}
-
-public class ReviewReactionUpdatedEvent
-{
-    public Guid ReviewId { get; set; }
-    public Guid UserId { get; set; }
-    public int LikesCount { get; set; }
-    public int DislikesCount { get; set; }
 }
 
 public interface IEventPublisher

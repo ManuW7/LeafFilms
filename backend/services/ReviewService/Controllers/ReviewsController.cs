@@ -54,9 +54,4 @@ public class ReviewsController : ControllerBase
         await _service.DeleteAsync(id, User);
         return NoContent();
     }
-
-    [HttpPost("{id:guid}/reaction")]
-    [Authorize]
-    public async Task<IActionResult> SetReaction(Guid id, [FromBody] ReviewReactionCommand cmd)
-        => Ok(await _service.SetReactionAsync(id, cmd, User));
 }

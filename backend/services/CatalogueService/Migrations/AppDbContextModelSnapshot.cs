@@ -58,18 +58,12 @@ namespace CatalogueService.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
-                    b.Property<string>("TitleRu")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Title");
-
-                    b.HasIndex("TitleRu");
 
                     b.ToTable("Movies");
                 });

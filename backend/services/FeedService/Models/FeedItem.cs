@@ -12,7 +12,5 @@ public class FeedItem
     public string? ExtraText { get; set; }
     public string? ImageUrl { get; set; }
     public int? Rating { get; set; }
-    public int LikesCount { get; set; }
-    public int DislikesCount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

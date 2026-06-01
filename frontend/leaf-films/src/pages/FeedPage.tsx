@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
-import type { FeedItem, ReviewReaction, WsMessage } from '../types'
+import type { FeedItem, WsMessage } from '../types'
 import { useAuthStore } from '../store/authStore'
 import { useWebSocket } from '../hooks/useWebSocket'
 import Avatar from '../components/ui/Avatar'
@@ -9,24 +9,9 @@ import Spinner from '../components/ui/Spinner'
 import Button from '../components/ui/Button'
 import './FeedPage.css'
 
-function FeedCard({
-  item,
-  onReactionUpdated,
-}: {
-  item: FeedItem
-  onReactionUpdated: (reviewId: string, likesCount: number, dislikesCount: number) => void
-}) {
+function FeedCard({ item }: { item: FeedItem }) {
   const navigate = useNavigate()
   const isReview = item.eventType === 'review_created'
-  const [myReaction, setMyReaction] = useState<-1 | 0 | 1>(0)
-
-  const handleReaction = async (value: -1 | 1) => {
-    if (!item.reviewId) return
-    const nextValue = myReaction === value ? 0 : value
-    const result = await apiFetch<ReviewReaction>('POST', `/reviews/${item.reviewId}/reaction`, { value: nextValue })
-    onReactionUpdated(item.reviewId, result.likesCount, result.dislikesCount)
-    setMyReaction(result.myReaction)
-  }
 
   return (
     <div className="feed-card">
@@ -48,16 +33,6 @@ function FeedCard({
         )}
         {item.extraText && <p className="feed-card__excerpt">{item.extraText}</p>}
         {item.imageUrl && <img className="feed-card__image" src={item.imageUrl} alt="Изображение к отзыву" />}
-        {isReview && item.reviewId && (
-          <div className="feed-card__reactions">
-            <button className={myReaction === 1 ? 'feed-card__reaction--active' : ''} onClick={() => handleReaction(1)}>
-              Нравится <span>{item.likesCount || 0}</span>
-            </button>
-            <button className={myReaction === -1 ? 'feed-card__reaction--active' : ''} onClick={() => handleReaction(-1)}>
-              Не нравится <span>{item.dislikesCount || 0}</span>
-            </button>
-          </div>
-        )}
         <p className="feed-card__date">{new Date(item.createdAt).toLocaleString('ru-RU')}</p>
       </div>
       <div className={`feed-card__icon ${isReview ? 'feed-card__icon--review' : 'feed-card__icon--watched'}`}>
@@ -109,17 +84,6 @@ export default function FeedPage() {
       return
     }
 
-    if (msg.type === 'review_reaction_updated') {
-      setItems(prev => prev.map(item => item.reviewId === msg.reviewId
-        ? {
-            ...item,
-            likesCount: msg.likesCount ?? item.likesCount,
-            dislikesCount: msg.dislikesCount ?? item.dislikesCount,
-          }
-        : item))
-      return
-    }
-
     setNotification(msg)
     const newItem: FeedItem = {
       id: Math.random().toString(),
@@ -130,17 +94,9 @@ export default function FeedPage() {
       movieTitle: msg.movieTitle || '',
       imageUrl: msg.imageUrl,
       rating: msg.rating,
-      likesCount: 0,
-      dislikesCount: 0,
       createdAt: msg.createdAt || msg.watchedAt || new Date().toISOString(),
     }
     setItems(prev => [newItem, ...prev])
-  }, [])
-
-  const handleReactionUpdated = useCallback((reviewId: string, likesCount: number, dislikesCount: number) => {
-    setItems(prev => prev.map(item => item.reviewId === reviewId
-      ? { ...item, likesCount, dislikesCount }
-      : item))
   }, [])
 
   useWebSocket(token, handleWsMessage)
@@ -156,10 +112,15 @@ export default function FeedPage() {
           <h1 className="feed-page__title">Лента</h1>
           <p className="feed-page__subtitle">События от людей, на которых вы подписаны</p>
         </div>
+        <div className="feed-page__live">
+          <span className="feed-page__live-dot" />
+          Live
+        </div>
       </div>
 
       {items.length === 0 ? (
         <div className="feed-page__empty">
+          <p className="feed-page__empty-icon">🌲</p>
           <p className="feed-page__empty-title">В лесу пока тихо</p>
           <p>Подпишитесь на других зрителей, чтобы увидеть их отзывы и просмотры.</p>
           <Link to="/users/search" className="feed-page__empty-link">
@@ -168,13 +129,7 @@ export default function FeedPage() {
         </div>
       ) : (
         <div className="feed-page__list">
-          {items.map(item => (
-            <FeedCard
-              key={item.id}
-              item={item}
-              onReactionUpdated={handleReactionUpdated}
-            />
-          ))}
+          {items.map(item => <FeedCard key={item.id} item={item} />)}
         </div>
       )}
     </div>

@@ -22,6 +22,18 @@
   letter-spacing: 0;
   flex-shrink: 0;
 }
+.navbar__logo::before {
+  content: " leaf ";
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  color: #07120d;
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 0.12rem 0.42rem;
+  margin-right: 0.45rem;
+  vertical-align: middle;
+}
 .navbar__links { display: flex; gap: 0.25rem; }
 .navbar__link {
   padding: 0.4rem 0.875rem;

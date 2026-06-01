@@ -77,11 +77,11 @@ using (var scope = app.Services.CreateScope())
     if (!db.Movies.Any())
     {
         db.Movies.AddRange(
-            new Movie { Title = "Inception", TitleRu = "Начало", Year = 2010, Genre = "Sci-Fi", Director = "Christopher Nolan", Description = "A thief who steals corporate secrets through dream-sharing technology." },
-            new Movie { Title = "The Matrix", TitleRu = "Матрица", Year = 1999, Genre = "Sci-Fi", Director = "The Wachowskis", Description = "A hacker discovers that reality is a simulation." },
-            new Movie { Title = "Interstellar", TitleRu = "Интерстеллар", Year = 2014, Genre = "Sci-Fi", Director = "Christopher Nolan", Description = "A team of explorers travel through a wormhole in space." },
-            new Movie { Title = "The Dark Knight", TitleRu = "Темный рыцарь", Year = 2008, Genre = "Action", Director = "Christopher Nolan", Description = "Batman faces the Joker, a criminal mastermind." },
-            new Movie { Title = "Parasite", TitleRu = "Паразиты", Year = 2019, Genre = "Thriller", Director = "Bong Joon-ho", Description = "A poor family schemes to become employed by a wealthy family." }
+            new Movie { Title = "Inception", Year = 2010, Genre = "Sci-Fi", Director = "Christopher Nolan", Description = "A thief who steals corporate secrets through dream-sharing technology." },
+            new Movie { Title = "The Matrix", Year = 1999, Genre = "Sci-Fi", Director = "The Wachowskis", Description = "A hacker discovers that reality is a simulation." },
+            new Movie { Title = "Interstellar", Year = 2014, Genre = "Sci-Fi", Director = "Christopher Nolan", Description = "A team of explorers travel through a wormhole in space." },
+            new Movie { Title = "The Dark Knight", Year = 2008, Genre = "Action", Director = "Christopher Nolan", Description = "Batman faces the Joker, a criminal mastermind." },
+            new Movie { Title = "Parasite", Year = 2019, Genre = "Thriller", Director = "Bong Joon-ho", Description = "A poor family schemes to become employed by a wealthy family." }
         );
         await db.SaveChangesAsync();
     }

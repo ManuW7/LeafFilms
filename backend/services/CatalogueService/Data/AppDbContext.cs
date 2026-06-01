@@ -16,11 +16,9 @@ public class AppDbContext : DbContext
         {
             e.HasKey(m => m.Id);
             e.Property(m => m.Title).HasMaxLength(300).IsRequired();
-            e.Property(m => m.TitleRu).HasMaxLength(300);
             e.Property(m => m.Director).HasMaxLength(200).IsRequired();
             e.Property(m => m.Genre).HasMaxLength(100).IsRequired();
             e.HasIndex(m => m.Title);
-            e.HasIndex(m => m.TitleRu);
         });
     }
 }
