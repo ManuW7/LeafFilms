@@ -33,6 +33,16 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Сделать существующего пользователя админом через setup secret</summary>
+    [HttpPost("admin/promote")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> PromoteToAdmin([FromBody] PromoteUserCommand cmd)
+    {
+        var result = await _userService.PromoteToAdminAsync(cmd);
+        return Ok(result);
+    }
+
     /// <summary>Поиск пользователей по username</summary>
     [HttpGet("search")]
     [Authorize]

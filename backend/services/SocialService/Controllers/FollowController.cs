@@ -44,7 +44,8 @@ public class FollowController : ControllerBase
         {
             FollowerId = followerId,
             FollowerName = CurrentUsername,
-            FollowedId = cmd.FollowedId
+            FollowedId = cmd.FollowedId,
+            FollowedName = cmd.FollowedName?.Trim() ?? string.Empty
         };
 
         var created = await _repo.CreateAsync(follow);
@@ -55,6 +56,7 @@ public class FollowController : ControllerBase
             FollowerId = created.FollowerId,
             FollowerName = created.FollowerName,
             FollowedId = created.FollowedId,
+            FollowedName = created.FollowedName,
             CreatedAt = created.CreatedAt
         });
     }
@@ -91,7 +93,7 @@ public class FollowController : ControllerBase
         return Ok(following.Select(f => new UserSummaryDto
         {
             UserId = f.FollowedId,
-            Username = f.FollowedName,
+            Username = string.IsNullOrWhiteSpace(f.FollowedName) ? f.FollowedId.ToString() : f.FollowedName,
             FollowedAt = f.CreatedAt
         }));
     }

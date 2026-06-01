@@ -12,6 +12,31 @@
 .movies-page__searching { display: flex; justify-content: center; padding: 2rem; }
 .movies-page__empty { text-align: center; padding: 4rem; color: var(--text-2); }
 .movies-page__empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.movies-admin-create {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.movies-admin-create h2 { font-weight: 600; margin-bottom: 1rem; }
+.movies-admin-create__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.movies-admin-create input,
+.movies-admin-create textarea {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  padding: 0.6rem 0.875rem;
+  outline: none;
+}
+.movies-admin-create textarea { width: 100%; resize: vertical; margin-bottom: 0.75rem; }
 .movies-page__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

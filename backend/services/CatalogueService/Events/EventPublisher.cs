@@ -1,16 +1,12 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
 
-namespace ActivityService.Events;
+namespace CatalogueService.Events;
 
-public class MovieWatchedEvent
+public class MovieDeletedEvent
 {
-    public Guid UserId { get; set; }
-    public string Username { get; set; } = string.Empty;
     public Guid MovieId { get; set; }
-    public string MovieTitle { get; set; } = string.Empty;
-    public DateTime WatchedAt { get; set; }
 }
 
 public interface IEventPublisher
@@ -49,5 +45,9 @@ public class RabbitMqEventPublisher : IEventPublisher, IDisposable
         return Task.CompletedTask;
     }
 
-    public void Dispose() { _channel?.Close(); _connection?.Close(); }
+    public void Dispose()
+    {
+        _channel?.Close();
+        _connection?.Close();
+    }
 }

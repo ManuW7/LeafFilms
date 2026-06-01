@@ -9,6 +9,7 @@ public interface IFeedService
     Task<IEnumerable<FeedItem>> GetFeedAsync(Guid userId, int page = 1, int pageSize = 20);
     Task PushToFeedAsync(Guid userId, FeedItem item);
     Task PushToManyAsync(IEnumerable<Guid> userIds, FeedItem item);
+    Task RemoveReviewFromFeedsAsync(Guid reviewId, IEnumerable<Guid> userIds);
 }
 
 public class RedisFeedService : IFeedService
@@ -58,5 +59,23 @@ public class RedisFeedService : IFeedService
     {
         var tasks = userIds.Select(id => PushToFeedAsync(id, item));
         await Task.WhenAll(tasks);
+    }
+
+    public async Task RemoveReviewFromFeedsAsync(Guid reviewId, IEnumerable<Guid> userIds)
+    {
+        var db = _redis.GetDatabase();
+        foreach (var userId in userIds.Distinct())
+        {
+            var key = $"feed:{userId}";
+            var values = await db.ListRangeAsync(key);
+            foreach (var value in values.Where(v => v.HasValue))
+            {
+                var item = JsonSerializer.Deserialize<FeedItem>(value!);
+                if (item?.ReviewId == reviewId)
+                {
+                    await db.ListRemoveAsync(key, value);
+                }
+            }
+        }
     }
 }

@@ -19,15 +19,23 @@ public class ReviewCreatedEvent
     public string MovieTitle { get; set; } = string.Empty;
     public int Rating { get; set; }
     public string Text { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
 public class MovieWatchedEvent
 {
     public Guid UserId { get; set; }
+    public string Username { get; set; } = string.Empty;
     public Guid MovieId { get; set; }
     public string MovieTitle { get; set; } = string.Empty;
     public DateTime WatchedAt { get; set; }
+}
+
+public class ReviewDeletedEvent
+{
+    public Guid ReviewId { get; set; }
+    public Guid UserId { get; set; }
 }
 
 // ── Consumer background service ───────────────────────────────────────────────
@@ -67,6 +75,7 @@ public class FeedEventConsumer : BackgroundService
         _channel = _connection.CreateModel();
 
         SubscribeToExchange("review.created", "feed.review.created", HandleReviewCreatedAsync);
+        SubscribeToExchange("review.deleted", "feed.review.deleted", HandleReviewDeletedAsync);
         SubscribeToExchange("movie.watched", "feed.movie.watched", HandleMovieWatchedAsync);
 
         _logger.LogInformation("FeedEventConsumer started, listening to RabbitMQ");
@@ -117,11 +126,13 @@ public class FeedEventConsumer : BackgroundService
         var feedItem = new FeedItem
         {
             EventType = "review_created",
+            ReviewId = evt.ReviewId,
             ActorId = evt.UserId,
             ActorName = evt.Username,
             MovieId = evt.MovieId,
             MovieTitle = evt.MovieTitle,
             ExtraText = evt.Text,
+            ImageUrl = evt.ImageUrl,
             Rating = evt.Rating,
             CreatedAt = evt.CreatedAt
         };
@@ -135,6 +146,7 @@ public class FeedEventConsumer : BackgroundService
             actorName = evt.Username,
             movieTitle = evt.MovieTitle,
             rating = evt.Rating,
+            imageUrl = evt.ImageUrl,
             createdAt = evt.CreatedAt
         });
     }
@@ -158,6 +170,7 @@ public class FeedEventConsumer : BackgroundService
         {
             EventType = "movie_watched",
             ActorId = evt.UserId,
+            ActorName = string.IsNullOrWhiteSpace(evt.Username) ? "unknown" : evt.Username,
             MovieId = evt.MovieId,
             MovieTitle = evt.MovieTitle,
             CreatedAt = evt.WatchedAt
@@ -168,8 +181,30 @@ public class FeedEventConsumer : BackgroundService
         await _wsManager.BroadcastToUsersAsync(followerIds, new
         {
             type = "movie_watched",
+            actorName = string.IsNullOrWhiteSpace(evt.Username) ? "unknown" : evt.Username,
+            movieId = evt.MovieId,
             movieTitle = evt.MovieTitle,
             watchedAt = evt.WatchedAt
+        });
+    }
+
+    private async Task HandleReviewDeletedAsync(string json)
+    {
+        var evt = JsonSerializer.Deserialize<ReviewDeletedEvent>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (evt is null) return;
+
+        using var scope = _services.CreateScope();
+        var feedService = scope.ServiceProvider.GetRequiredService<IFeedService>();
+        var socialClient = scope.ServiceProvider.GetRequiredService<ISocialClient>();
+
+        var followerIds = (await socialClient.GetFollowerIdsAsync(evt.UserId)).ToList();
+        await feedService.RemoveReviewFromFeedsAsync(evt.ReviewId, followerIds);
+
+        await _wsManager.BroadcastToUsersAsync(followerIds, new
+        {
+            type = "review_deleted",
+            reviewId = evt.ReviewId
         });
     }
 

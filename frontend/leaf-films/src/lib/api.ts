@@ -2,6 +2,16 @@ function getToken(): string | null {
   return localStorage.getItem("token");
 }
 
+function toApiPath(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  return path.startsWith("/api") ? path : `/api${path}`;
+}
+
+export class ApiError extends Error {
+  status?: number;
+  data?: { error?: string; [key: string]: unknown };
+}
+
 export async function apiFetch<T>(
   method: string,
   path: string,
@@ -10,7 +20,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   token = token ?? getToken() ?? undefined;
 
-  const res = await fetch(path, {
+  const res = await fetch(toApiPath(path), {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -20,18 +30,24 @@ export async function apiFetch<T>(
   });
 
   if (res.status === 401) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
-    throw new Error("Unauthorized");
+    const err = new ApiError("Unauthorized");
+    err.status = 401;
+    if (path !== "/users/login") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.dispatchEvent(new Event("auth:unauthorized"));
+    }
+    throw err;
   }
 
   if (!res.ok) {
-    let errorData: any = {};
+    let errorData: { error?: string; [key: string]: unknown } = {};
     try {
       errorData = await res.json();
-    } catch {}
-    const err: any = new Error(errorData?.error || `HTTP ${res.status}`);
+    } catch {
+      // Some endpoints return an empty error body.
+    }
+    const err = new ApiError(errorData?.error || `HTTP ${res.status}`);
     err.data = errorData;
     throw err;
   }

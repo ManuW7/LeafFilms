@@ -10,6 +10,7 @@ export interface AuthResponse {
   id: string
   username: string
   email: string
+  role?: 'user' | 'admin'
   token: string
 }
 
@@ -33,6 +34,7 @@ export interface Review {
   movieTitle: string
   rating: number
   text: string
+  imageUrl?: string
   likesCount: number
   createdAt: string
 }
@@ -82,19 +84,25 @@ export interface PlaylistMovie {
 export interface FeedItem {
   id: string
   eventType: 'review_created' | 'movie_watched'
+  reviewId?: string
   actorId: string
   actorName: string
   movieId: string
   movieTitle: string
   extraText?: string
+  imageUrl?: string
   rating?: number
   createdAt: string
 }
 
 export interface WsMessage {
-  type: 'review_created' | 'movie_watched'
+  type: 'review_created' | 'movie_watched' | 'review_deleted'
+  reviewId?: string
   actorName?: string
+  movieId?: string
   movieTitle?: string
+  imageUrl?: string
   rating?: number
   createdAt?: string
+  watchedAt?: string
 }

@@ -2,9 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import type { Movie } from '../types'
+import { useAuthStore } from '../store/authStore'
 import Input from '../components/ui/Input'
 import Spinner from '../components/ui/Spinner'
 import Badge from '../components/ui/Badge'
+import Button from '../components/ui/Button'
 import './MoviesPage.css'
 
 function MovieCard({ movie, onClick }: { movie: Movie; onClick: () => void }) {
@@ -36,10 +38,20 @@ function MovieCard({ movie, onClick }: { movie: Movie; onClick: () => void }) {
 
 export default function MoviesPage() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'admin'
   const [movies, setMovies] = useState<Movie[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
+  const [newMovie, setNewMovie] = useState({
+    title: '',
+    year: '',
+    genre: '',
+    director: '',
+    description: '',
+    posterUrl: '',
+  })
 
   useEffect(() => {
     apiFetch<Movie[]>('GET', '/movies').then(data => setMovies(data)).finally(() => setLoading(false))
@@ -58,6 +70,21 @@ export default function MoviesPage() {
     setSearching(false)
   }, [])
 
+  const handleCreateMovie = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const created = await apiFetch<Movie>('POST', '/movies', {
+      title: newMovie.title,
+      year: Number(newMovie.year),
+      genre: newMovie.genre,
+      director: newMovie.director,
+      description: newMovie.description,
+      posterUrl: newMovie.posterUrl,
+    })
+    setMovies(m => [created, ...m])
+    setNewMovie({ title: '', year: '', genre: '', director: '', description: '', posterUrl: '' })
+    navigate(`/movies/${created.id}`)
+  }
+
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><Spinner /></div>
 
   return (
@@ -72,6 +99,21 @@ export default function MoviesPage() {
             onChange={e => handleSearch(e.target.value)} />
         </div>
       </div>
+
+      {isAdmin && (
+        <form className="movies-admin-create" onSubmit={handleCreateMovie}>
+          <h2>Добавить фильм</h2>
+          <div className="movies-admin-create__grid">
+            <input value={newMovie.title} onChange={e => setNewMovie(f => ({ ...f, title: e.target.value }))} placeholder="Название" required />
+            <input value={newMovie.year} onChange={e => setNewMovie(f => ({ ...f, year: e.target.value }))} placeholder="Год" type="number" required />
+            <input value={newMovie.genre} onChange={e => setNewMovie(f => ({ ...f, genre: e.target.value }))} placeholder="Жанр" required />
+            <input value={newMovie.director} onChange={e => setNewMovie(f => ({ ...f, director: e.target.value }))} placeholder="Режиссер" required />
+            <input value={newMovie.posterUrl} onChange={e => setNewMovie(f => ({ ...f, posterUrl: e.target.value }))} placeholder="URL постера" />
+          </div>
+          <textarea value={newMovie.description} onChange={e => setNewMovie(f => ({ ...f, description: e.target.value }))} placeholder="Описание" rows={3} />
+          <Button type="submit">Создать фильм</Button>
+        </form>
+      )}
 
       {searching && <div className="movies-page__searching"><Spinner size={24} /></div>}
 

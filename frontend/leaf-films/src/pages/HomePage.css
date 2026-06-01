@@ -1,4 +1,3 @@
-/* Authenticated home */
 .home-auth { max-width: 800px; margin: 0 auto; text-align: center; padding: 4rem 1rem; }
 .home-auth__greeting { font-family: var(--font-serif); font-size: 3rem; margin-bottom: 0.75rem; }
 .home-auth__subtitle { color: var(--text-2); font-size: 1.1rem; margin-bottom: 3rem; }
@@ -10,7 +9,7 @@
   margin: 0 auto;
 }
 .home-auth__card {
-  background: var(--bg-2);
+  background: linear-gradient(180deg, rgba(23, 49, 35, 0.9), rgba(15, 31, 23, 0.92));
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 1.5rem 1rem;
@@ -18,13 +17,12 @@
   text-align: center;
   transition: border-color var(--transition), transform var(--transition);
 }
-.home-auth__card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.home-auth__card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(71, 184, 109, 0.12); }
 .home-auth__card-icon { font-size: 2rem; margin-bottom: 0.5rem; }
 .home-auth__card-label { font-weight: 600; margin-bottom: 0.2rem; }
 .home-auth__card-desc { font-size: 0.8125rem; color: var(--text-3); }
 
-/* Landing */
-.home-landing { max-width: 700px; margin: 0 auto; padding: 5rem 1rem; text-align: center; }
+.home-landing { max-width: 760px; margin: 0 auto; padding: 5rem 1rem; text-align: center; }
 .home-landing__eyebrow {
   color: var(--accent);
   font-size: 0.875rem;
@@ -37,6 +35,7 @@
   font-size: clamp(2.5rem, 6vw, 4rem);
   line-height: 1.15;
   margin-bottom: 1.25rem;
+  text-shadow: 0 10px 38px rgba(143, 227, 136, 0.12);
 }
 .home-landing__title em { color: var(--accent); }
 .home-landing__subtitle {
@@ -55,7 +54,7 @@
 }
 .home-landing__feature {
   padding: 1.5rem;
-  background: var(--bg-2);
+  background: rgba(15, 31, 23, 0.78);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   text-align: left;

@@ -13,6 +13,7 @@ public class ReviewCreatedEvent
     public string MovieTitle { get; set; } = string.Empty;
     public int Rating { get; set; }
     public string Text { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -25,6 +26,8 @@ public class ReviewUpdatedEvent
 
 public class ReviewDeletedEvent
 {
+    public Guid ReviewId { get; set; }
+    public Guid UserId { get; set; }
     public Guid MovieId { get; set; }
     public int Rating { get; set; }
 }

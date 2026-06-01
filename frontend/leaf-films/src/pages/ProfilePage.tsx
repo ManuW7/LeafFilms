@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import type { User, UserSummary, Review } from '../types'
@@ -54,7 +54,7 @@ export default function ProfilePage() {
         setFollowers(f => f.filter(x => x.userId !== me?.id))
         setToast({ msg: 'Вы отписались', type: 'error' })
       } else {
-        await apiFetch('POST', '/follow', { followedId: id })
+        await apiFetch('POST', '/follow', { followedId: id, followedName: profile?.username })
         setIsFollowing(true)
         if (me) setFollowers(f => [...f, { userId: me.id, username: me.username, followedAt: new Date().toISOString() }])
         setToast({ msg: 'Вы подписались!', type: 'success' })
@@ -77,13 +77,15 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
-      {toast && <Toast message={toast.msg} type={toast.type as any} onClose={() => setToast(null)} />}
+      {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
       <div className="profile-header">
         <Avatar name={profile.username} size={72} />
         <div className="profile-header__info">
           <h1 className="profile-header__name">{profile.username}</h1>
-          <p className="profile-header__meta">{profile.email} · на сайте с {new Date(profile.createdAt).toLocaleDateString('ru-RU')}</p>
+          <p className="profile-header__meta">
+            {isMe ? `${profile.email} · ` : ''}на сайте с {new Date(profile.createdAt).toLocaleDateString('ru-RU')}
+          </p>
           <div className="profile-header__stats">
             <span className="profile-header__stat"><strong>{reviews.length}</strong> отзывов</span>
             <span className="profile-header__stat"><strong>{followers.length}</strong> подписчиков</span>
@@ -115,6 +117,7 @@ export default function ProfilePage() {
                 <span className="profile-review__score">{r.rating}/10</span>
               </div>
               <p className="profile-review__text">{r.text}</p>
+              {r.imageUrl && <img className="profile-review__image" src={r.imageUrl} alt="Изображение к отзыву" />}
               <p className="profile-review__date">{new Date(r.createdAt).toLocaleDateString('ru-RU')}</p>
             </div>
           ))}

@@ -6,6 +6,8 @@ public class FollowCommand
 {
     [Required]
     public Guid FollowedId { get; set; }
+
+    public string? FollowedName { get; set; }
 }
 
 public class FollowDto

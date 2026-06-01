@@ -32,3 +32,13 @@ public class UpdateUserCommand
     [MinLength(3), MaxLength(50)]
     public string? Username { get; set; }
 }
+
+public class PromoteUserCommand
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    public string AdminSecret { get; set; } = string.Empty;
+}

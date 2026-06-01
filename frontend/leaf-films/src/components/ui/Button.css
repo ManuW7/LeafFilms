@@ -13,7 +13,7 @@
 }
 .btn:disabled { opacity: 0.5; }
 
-.btn--primary  { background: var(--accent); color: #0d0d0f; }
+.btn--primary  { background: var(--accent); color: #07120d; }
 .btn--secondary { background: var(--bg-3); color: var(--text); border: 1px solid var(--border); }
 .btn--ghost    { background: transparent; color: var(--text-2); }
 .btn--danger   { background: transparent; color: var(--danger); border: 1px solid var(--danger); }

@@ -9,6 +9,7 @@ namespace ActivityService.Repositories;
 public interface IWatchHistoryRepository
 {
     Task<IEnumerable<WatchHistory>> GetByUserAsync(Guid userId);
+    Task<WatchHistory?> GetAsync(Guid userId, Guid movieId);
     Task<WatchHistory> AddAsync(WatchHistory entry);
 }
 
@@ -22,6 +23,10 @@ public class WatchHistoryRepository : IWatchHistoryRepository
                .Where(x => x.UserId == userId)
                .OrderByDescending(x => x.WatchedAt)
                .ToListAsync();
+
+    public async Task<WatchHistory?> GetAsync(Guid userId, Guid movieId)
+        => await _db.WatchHistory.AsNoTracking()
+               .FirstOrDefaultAsync(x => x.UserId == userId && x.MovieId == movieId);
 
     public async Task<WatchHistory> AddAsync(WatchHistory entry)
     { _db.WatchHistory.Add(entry); await _db.SaveChangesAsync(); return entry; }
@@ -98,7 +103,14 @@ public class PlaylistRepository : IPlaylistRepository
     }
 
     public async Task AddMovieAsync(PlaylistMovie movie)
-    { _db.PlaylistMovies.Add(movie); await _db.SaveChangesAsync(); }
+    {
+        var exists = await _db.PlaylistMovies.AnyAsync(x =>
+            x.PlaylistId == movie.PlaylistId && x.MovieId == movie.MovieId);
+        if (exists) return;
+
+        _db.PlaylistMovies.Add(movie);
+        await _db.SaveChangesAsync();
+    }
 
     public async Task RemoveMovieAsync(Guid playlistId, Guid movieId)
     {

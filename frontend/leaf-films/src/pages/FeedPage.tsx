@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import type { FeedItem, WsMessage } from '../types'
 import { useAuthStore } from '../store/authStore'
 import { useWebSocket } from '../hooks/useWebSocket'
 import Avatar from '../components/ui/Avatar'
 import Spinner from '../components/ui/Spinner'
+import Button from '../components/ui/Button'
 import './FeedPage.css'
 
 function FeedCard({ item }: { item: FeedItem }) {
@@ -31,10 +32,11 @@ function FeedCard({ item }: { item: FeedItem }) {
           </div>
         )}
         {item.extraText && <p className="feed-card__excerpt">{item.extraText}</p>}
+        {item.imageUrl && <img className="feed-card__image" src={item.imageUrl} alt="Изображение к отзыву" />}
         <p className="feed-card__date">{new Date(item.createdAt).toLocaleString('ru-RU')}</p>
       </div>
       <div className={`feed-card__icon ${isReview ? 'feed-card__icon--review' : 'feed-card__icon--watched'}`}>
-        {isReview ? '⭐' : '🎬'}
+        {isReview ? '★' : '🎬'}
       </div>
     </div>
   )
@@ -49,7 +51,7 @@ function WsNotification({ msg, onClose }: { msg: WsMessage; onClose: () => void 
   return (
     <div className="ws-notification">
       <div className="ws-notification__inner">
-        <span className="ws-notification__icon">{msg.type === 'review_created' ? '⭐' : '🎬'}</span>
+        <span className="ws-notification__icon">{msg.type === 'review_created' ? '★' : '🎬'}</span>
         <div>
           <p className="ws-notification__title">Новое событие</p>
           <p className="ws-notification__body">
@@ -77,16 +79,22 @@ export default function FeedPage() {
   }, [])
 
   const handleWsMessage = useCallback((msg: WsMessage) => {
+    if (msg.type === 'review_deleted') {
+      setItems(prev => prev.filter(item => item.reviewId !== msg.reviewId))
+      return
+    }
+
     setNotification(msg)
     const newItem: FeedItem = {
       id: Math.random().toString(),
       eventType: msg.type,
       actorId: '',
       actorName: msg.actorName || 'Кто-то',
-      movieId: '',
+      movieId: msg.movieId || '',
       movieTitle: msg.movieTitle || '',
+      imageUrl: msg.imageUrl,
       rating: msg.rating,
-      createdAt: msg.createdAt || new Date().toISOString(),
+      createdAt: msg.createdAt || msg.watchedAt || new Date().toISOString(),
     }
     setItems(prev => [newItem, ...prev])
   }, [])
@@ -112,9 +120,12 @@ export default function FeedPage() {
 
       {items.length === 0 ? (
         <div className="feed-page__empty">
-          <p className="feed-page__empty-icon">📰</p>
-          <p className="feed-page__empty-title">Лента пуста</p>
-          <p>Подпишитесь на других пользователей, чтобы видеть их активность</p>
+          <p className="feed-page__empty-icon">🌲</p>
+          <p className="feed-page__empty-title">В лесу пока тихо</p>
+          <p>Подпишитесь на других зрителей, чтобы увидеть их отзывы и просмотры.</p>
+          <Link to="/users/search" className="feed-page__empty-link">
+            <Button>Найти людей</Button>
+          </Link>
         </div>
       ) : (
         <div className="feed-page__list">

@@ -1,4 +1,5 @@
 using CatalogueService.Data;
+using CatalogueService.Events;
 using CatalogueService.Middleware;
 using CatalogueService.Repositories;
 using CatalogueService.Services;
@@ -40,6 +41,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddHostedService<CatalogueService.Events.ReviewCreatedConsumer>();

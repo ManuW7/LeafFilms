@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
             // Один пользователь — один отзыв на фильм
             e.HasIndex(r => new { r.UserId, r.MovieId }).IsUnique();
             e.Property(r => r.Text).HasMaxLength(2000);
+            e.Property(r => r.ImageUrl).HasMaxLength(1000);
         });
     }
 }

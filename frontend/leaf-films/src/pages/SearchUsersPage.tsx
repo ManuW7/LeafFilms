@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
 import type { User } from '../types'
@@ -52,7 +52,6 @@ export default function SearchUsersPage() {
             <Avatar name={u.username} size={44} />
             <div>
               <p className="search-user-item__name">{u.username}</p>
-              <p className="search-user-item__email">{u.email}</p>
             </div>
             <span className="search-user-item__arrow">Перейти →</span>
           </div>

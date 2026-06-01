@@ -70,6 +70,7 @@ builder.Services.AddHttpClient<ICatalogueClient, CatalogueClient>(client =>
 builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewAppService>();
+builder.Services.AddHostedService<MovieDeletedConsumer>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

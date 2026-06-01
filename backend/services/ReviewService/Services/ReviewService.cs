@@ -15,6 +15,7 @@ public interface IReviewService
     Task<ReviewDto> CreateAsync(CreateReviewCommand cmd, ClaimsPrincipal user);
     Task<ReviewDto> UpdateAsync(Guid id, UpdateReviewCommand cmd, ClaimsPrincipal user);
     Task DeleteAsync(Guid id, ClaimsPrincipal user);
+    Task DeleteByMovieAsync(Guid movieId);
 }
 
 public class ReviewAppService : IReviewService
@@ -63,7 +64,8 @@ public class ReviewAppService : IReviewService
             MovieId = cmd.MovieId,
             MovieTitle = movie.Title,
             Rating = cmd.Rating,
-            Text = cmd.Text
+            Text = cmd.Text,
+            ImageUrl = string.IsNullOrWhiteSpace(cmd.ImageUrl) ? null : cmd.ImageUrl.Trim()
         };
 
         var created = await _repo.CreateAsync(review);
@@ -78,6 +80,7 @@ public class ReviewAppService : IReviewService
             MovieTitle = created.MovieTitle,
             Rating = created.Rating,
             Text = created.Text,
+            ImageUrl = created.ImageUrl,
             CreatedAt = created.CreatedAt
         });
 
@@ -97,6 +100,7 @@ public class ReviewAppService : IReviewService
 
         if (cmd.Rating.HasValue) review.Rating = cmd.Rating.Value;
         if (cmd.Text is not null) review.Text = cmd.Text;
+        if (cmd.ImageUrl is not null) review.ImageUrl = string.IsNullOrWhiteSpace(cmd.ImageUrl) ? null : cmd.ImageUrl.Trim();
         review.UpdatedAt = DateTime.UtcNow;
 
         var updated = await _repo.UpdateAsync(review);
@@ -133,11 +137,34 @@ public class ReviewAppService : IReviewService
 
         await _publisher.PublishAsync("review.deleted", new ReviewDeletedEvent
         {
+            ReviewId = review.Id,
+            UserId = review.UserId,
             MovieId = review.MovieId,
             Rating = review.Rating
         });
 
         _logger.LogInformation("Review {ReviewId} deleted, rating {Rating} removed", id, review.Rating);
+    }
+
+    public async Task DeleteByMovieAsync(Guid movieId)
+    {
+        var reviews = (await _repo.GetByMovieIdAsync(movieId)).ToList();
+        if (reviews.Count == 0) return;
+
+        await _repo.DeleteManyAsync(reviews);
+
+        foreach (var review in reviews)
+        {
+            await _publisher.PublishAsync("review.deleted", new ReviewDeletedEvent
+            {
+                ReviewId = review.Id,
+                UserId = review.UserId,
+                MovieId = review.MovieId,
+                Rating = review.Rating
+            });
+        }
+
+        _logger.LogInformation("Deleted {Count} reviews for movie {MovieId}", reviews.Count, movieId);
     }
 
     private static Guid GetUserId(ClaimsPrincipal principal)
@@ -157,6 +184,7 @@ public class ReviewAppService : IReviewService
         MovieTitle = r.MovieTitle,
         Rating = r.Rating,
         Text = r.Text,
+        ImageUrl = r.ImageUrl,
         LikesCount = r.LikesCount,
         CreatedAt = r.CreatedAt
     };

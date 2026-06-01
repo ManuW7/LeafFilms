@@ -13,6 +13,7 @@ public interface IReviewRepository
     Task<Review> CreateAsync(Review review);
     Task<Review> UpdateAsync(Review review);
     Task DeleteAsync(Guid id);
+    Task DeleteManyAsync(IEnumerable<Review> reviews);
 }
 
 public class ReviewRepository : IReviewRepository
@@ -49,5 +50,11 @@ public class ReviewRepository : IReviewRepository
     {
         var r = await _db.Reviews.FindAsync(id);
         if (r is not null) { _db.Reviews.Remove(r); await _db.SaveChangesAsync(); }
+    }
+
+    public async Task DeleteManyAsync(IEnumerable<Review> reviews)
+    {
+        _db.Reviews.RemoveRange(reviews);
+        await _db.SaveChangesAsync();
     }
 }

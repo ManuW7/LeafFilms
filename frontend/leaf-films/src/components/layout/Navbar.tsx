@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import Avatar from '../ui/Avatar'
@@ -22,7 +22,7 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <nav className="navbar__inner">
-        <Link to="/" className="navbar__logo">CineGram</Link>
+        <Link to="/" className="navbar__logo">LeafFilms</Link>
 
         {isAuth && (
           <div className="navbar__links">

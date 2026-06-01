@@ -26,6 +26,24 @@
 .movie-page__review-count { font-size: 0.75rem; color: var(--text-3); margin-top: 2px; }
 .movie-page__description { color: var(--text-2); line-height: 1.7; margin-bottom: 1.5rem; }
 .movie-page__actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.movie-page__playlist-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+.movie-page__playlist-actions select,
+.movie-page__playlist-actions input,
+.admin-movie-panel input,
+.admin-movie-panel textarea {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  padding: 0.6rem 0.875rem;
+  outline: none;
+}
 
 .movie-page__poster {
   width: 160px;
@@ -41,6 +59,23 @@
   overflow: hidden;
 }
 .movie-page__poster img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg); }
+
+.admin-movie-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+.admin-movie-panel h2 { font-weight: 600; margin-bottom: 1rem; }
+.admin-movie-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.admin-movie-panel textarea { width: 100%; resize: vertical; }
+.admin-movie-panel__actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; }
 
 /* Review form */
 .review-form {
@@ -64,6 +99,20 @@
   resize: vertical;
   outline: none;
   font-family: inherit;
+}
+.review-form__input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  color: var(--text);
+  font-size: 0.9375rem;
+  outline: none;
+}
+.review-form__error {
+  color: var(--danger);
+  font-size: 0.875rem;
 }
 
 /* Reviews list */
@@ -97,3 +146,24 @@
 .review-card__score { color: var(--accent); font-weight: 700; }
 .review-card__score-max { color: var(--text-3); font-size: 0.8rem; }
 .review-card__text { color: var(--text-2); font-size: 0.9rem; line-height: 1.6; }
+.review-card__image {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-top: 1rem;
+}
+.review-card__confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(232, 90, 74, 0.35);
+  border-radius: var(--radius);
+  background: rgba(232, 90, 74, 0.08);
+  color: var(--text);
+}
+.review-card__confirm div { display: flex; gap: 0.5rem; }

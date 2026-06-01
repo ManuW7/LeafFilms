@@ -94,6 +94,21 @@
 }
 .playlist-card__name { font-weight: 600; }
 .playlist-card__meta { font-size: 0.75rem; color: var(--text-3); }
+.playlist-card__add {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+.playlist-card__add select {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.75rem;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
 .playlist-card__movies { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .playlist-card__movie {
   padding: 0.25rem 0.625rem;

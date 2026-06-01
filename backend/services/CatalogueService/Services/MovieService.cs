@@ -1,4 +1,5 @@
-﻿using CatalogueService.DTOs;
+using CatalogueService.DTOs;
+using CatalogueService.Events;
 using CatalogueService.Exceptions;
 using CatalogueService.Models;
 using CatalogueService.Repositories;
@@ -21,13 +22,15 @@ public class MovieService : IMovieService
 {
     private readonly IMovieRepository _repo;
     private readonly IConnectionMultiplexer _redis;
+    private readonly IEventPublisher _publisher;
     private readonly ILogger<MovieService> _logger;
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
 
-    public MovieService(IMovieRepository repo, IConnectionMultiplexer redis, ILogger<MovieService> logger)
+    public MovieService(IMovieRepository repo, IConnectionMultiplexer redis, IEventPublisher publisher, ILogger<MovieService> logger)
     {
         _repo = repo;
         _redis = redis;
+        _publisher = publisher;
         _logger = logger;
     }
 
@@ -111,6 +114,7 @@ public class MovieService : IMovieService
     {
         await _repo.DeleteAsync(id);
         await InvalidateCacheAsync(id);
+        await _publisher.PublishAsync("movie.deleted", new MovieDeletedEvent { MovieId = id });
     }
 
     private async Task InvalidateCacheAsync(Guid? id = null)

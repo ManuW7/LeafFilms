@@ -14,18 +14,21 @@ public interface IUserService
     Task<AuthResponseDto> LoginAsync(LoginUserCommand cmd);
     Task<UserProfileDto> GetByIdAsync(Guid id);
     Task<IEnumerable<UserProfileDto>> SearchAsync(string query);
+    Task<UserProfileDto> PromoteToAdminAsync(PromoteUserCommand cmd);
 }
 
 public class UserAppService : IUserService
 {
     private readonly IUserRepository _repo;
     private readonly ITokenService _tokenService;
+    private readonly IConfiguration _config;
     private readonly ILogger<UserAppService> _logger;
 
-    public UserAppService(IUserRepository repo, ITokenService tokenService, ILogger<UserAppService> logger)
+    public UserAppService(IUserRepository repo, ITokenService tokenService, IConfiguration config, ILogger<UserAppService> logger)
     {
         _repo = repo;
         _tokenService = tokenService;
+        _config = config;
         _logger = logger;
     }
 
@@ -101,6 +104,34 @@ public class UserAppService : IUserService
             Role = u.Role,
             CreatedAt = u.CreatedAt
         });
+    }
+
+    public async Task<UserProfileDto> PromoteToAdminAsync(PromoteUserCommand cmd)
+    {
+        var expectedSecret = _config["Admin:SetupSecret"];
+        if (string.IsNullOrWhiteSpace(expectedSecret))
+            throw new ArgumentException("Admin setup secret is not configured.");
+
+        if (!CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(expectedSecret),
+                Encoding.UTF8.GetBytes(cmd.AdminSecret)))
+            throw new UnauthorizedException("Invalid admin setup secret.");
+
+        var user = await _repo.GetByEmailAsync(cmd.Email)
+            ?? throw new NotFoundException("User", cmd.Email);
+
+        user.Role = "admin";
+        var updated = await _repo.UpdateAsync(user);
+        _logger.LogInformation("User promoted to admin: {UserId}", updated.Id);
+
+        return new UserProfileDto
+        {
+            Id = updated.Id,
+            Username = updated.Username,
+            Email = updated.Email,
+            Role = updated.Role,
+            CreatedAt = updated.CreatedAt
+        };
     }
 
     private static string HashPassword(string password)

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { apiFetch } from "../lib/api";
+import { ApiError, apiFetch } from "../lib/api";
 import type { AuthResponse, User } from "../types";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -44,8 +44,8 @@ export default function RegisterPage() {
       );
       setAuth(me, data.token);
       navigate("/");
-    } catch (err: any) {
-      setErrors({ general: err?.data?.error || "Ошибка регистрации" });
+    } catch (err) {
+      setErrors({ general: err instanceof ApiError ? err.data?.error || "Ошибка регистрации" : "Ошибка регистрации" });
     } finally {
       setLoading(false);
     }

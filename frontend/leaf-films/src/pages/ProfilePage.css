@@ -61,6 +61,14 @@
 .profile-review__movie { font-weight: 600; }
 .profile-review__score { color: var(--accent); font-weight: 700; }
 .profile-review__text { color: var(--text-2); font-size: 0.875rem; line-height: 1.5; }
+.profile-review__image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-top: 0.75rem;
+}
 .profile-review__date { font-size: 0.75rem; color: var(--text-3); margin-top: 0.5rem; }
 
 /* User item */

@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <h1 className="login-page__title">Добро пожаловать</h1>
-      <p className="login-page__subtitle">Войдите в свой аккаунт CineGram</p>
+      <p className="login-page__subtitle">Войдите в свой аккаунт LeafFilms</p>
 
       <form onSubmit={handleSubmit} className="login-page__form">
         <Input

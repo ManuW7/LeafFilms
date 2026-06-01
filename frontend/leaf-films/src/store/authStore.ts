@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer } from 'react'
+import React, { createContext, useContext, useEffect, useReducer } from 'react'
 import type { User } from '../types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -36,7 +36,10 @@ function getInitialState(): AuthState {
     if (token && userRaw) {
       return { user: JSON.parse(userRaw), token, isAuth: true }
     }
-  } catch {}
+  } catch {
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+  }
   return { user: null, token: null, isAuth: false }
 }
 
@@ -57,6 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('token')
     dispatch({ type: 'LOGOUT' })
   }
+
+  useEffect(() => {
+    const handleUnauthorized = () => dispatch({ type: 'LOGOUT' })
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
+  }, [])
 
   return React.createElement(
     AuthContext.Provider,

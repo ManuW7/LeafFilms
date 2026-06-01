@@ -43,6 +43,18 @@ public class HistoryController : ControllerBase
     public async Task<IActionResult> AddToHistory([FromBody] AddToHistoryCommand cmd)
     {
         var userId = CurrentUserId;
+        var existing = await _repo.GetAsync(userId, cmd.MovieId);
+        if (existing is not null)
+        {
+            return Ok(new WatchHistoryDto
+            {
+                Id = existing.Id,
+                MovieId = existing.MovieId,
+                MovieTitle = existing.MovieTitle,
+                WatchedAt = existing.WatchedAt
+            });
+        }
+
         var entry = new WatchHistory
         {
             UserId = userId,
@@ -54,6 +66,7 @@ public class HistoryController : ControllerBase
         await _publisher.PublishAsync("movie.watched", new MovieWatchedEvent
         {
             UserId = userId,
+            Username = User.FindFirst(ClaimTypes.Name)?.Value ?? "unknown",
             MovieId = cmd.MovieId,
             MovieTitle = cmd.MovieTitle,
             WatchedAt = created.WatchedAt

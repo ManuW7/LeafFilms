@@ -11,6 +11,7 @@ public class Review
     public int Rating { get; set; }
 
     public string Text { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
     public int LikesCount { get; set; } = 0;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

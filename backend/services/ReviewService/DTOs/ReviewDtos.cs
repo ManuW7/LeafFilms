@@ -11,6 +11,7 @@ public class ReviewDto
     public string MovieTitle { get; set; } = string.Empty;
     public int Rating { get; set; }
     public string Text { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
     public int LikesCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -25,10 +26,14 @@ public class CreateReviewCommand
 
     [Required, MinLength(10), MaxLength(2000)]
     public string Text { get; set; } = string.Empty;
+
+    [Url, MaxLength(1000)]
+    public string? ImageUrl { get; set; }
 }
 
 public class UpdateReviewCommand
 {
     [Range(1, 10)] public int? Rating { get; set; }
     [MinLength(10), MaxLength(2000)] public string? Text { get; set; }
+    [Url, MaxLength(1000)] public string? ImageUrl { get; set; }
 }
