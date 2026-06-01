@@ -1,0 +1,9 @@
+.star-rating { display: flex; gap: 2px; }
+.star-rating__star {
+  cursor: pointer;
+  color: var(--bg-3);
+  transition: color 80ms;
+  user-select: none;
+}
+.star-rating__star--active { color: var(--accent); }
+.star-rating__star--readonly { cursor: default; }

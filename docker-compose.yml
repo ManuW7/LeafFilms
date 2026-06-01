@@ -1,0 +1,270 @@
+services:
+  user-db:
+    image: postgres:16-alpine
+    container_name: cinegram-postgres-users
+    environment:
+      POSTGRES_DB: users
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - pgdata-users:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  catalogue-db:
+    image: postgres:16-alpine
+    container_name: cinegram-postgres-catalogue
+    environment:
+      POSTGRES_DB: catalogue
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - pgdata-catalogue:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d catalogue"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  review-db:
+    image: postgres:16-alpine
+    container_name: cinegram-postgres-reviews
+    environment:
+      POSTGRES_DB: reviews
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - pgdata-reviews:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reviews"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  social-db:
+    image: postgres:16-alpine
+    container_name: cinegram-postgres-social
+    environment:
+      POSTGRES_DB: social
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - pgdata-social:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d social"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  activity-db:
+    image: postgres:16-alpine
+    container_name: cinegram-postgres-activity
+    environment:
+      POSTGRES_DB: activity
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - pgdata-activity:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d activity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cinegram-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: cinegram-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  user-service:
+    build:
+      context: ./backend/services/UserService
+      dockerfile: Dockerfile
+    container_name: cinegram-user-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
+      ConnectionStrings__Default: "Host=user-db;Port=5432;Database=users;Username=postgres;Password=changeme"
+    depends_on:
+      user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  catalogue-service:
+    build:
+      context: ./backend/services/CatalogueService
+      dockerfile: Dockerfile
+    container_name: cinegram-catalogue-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
+      ConnectionStrings__Default: "Host=catalogue-db;Port=5432;Database=catalogue;Username=postgres;Password=changeme"
+      Redis__ConnectionString: "redis:6379"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: admin
+      RabbitMQ__Pass: admin123
+    depends_on:
+      catalogue-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  review-service:
+    build:
+      context: ./backend/services/ReviewService
+      dockerfile: Dockerfile
+    container_name: cinegram-review-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
+      ConnectionStrings__Default: "Host=review-db;Port=5432;Database=reviews;Username=postgres;Password=changeme"
+      Services__Catalogue: "http://catalogue-service:8080"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: admin
+      RabbitMQ__Pass: admin123
+    depends_on:
+      review-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      catalogue-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  social-service:
+    build:
+      context: ./backend/services/SocialService
+      dockerfile: Dockerfile
+    container_name: cinegram-social-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
+      ConnectionStrings__Default: "Host=social-db;Port=5432;Database=social;Username=postgres;Password=changeme"
+    depends_on:
+      social-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  activity-service:
+    build:
+      context: ./backend/services/ActivityService
+      dockerfile: Dockerfile
+    container_name: cinegram-activity-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
+      ConnectionStrings__Default: "Host=activity-db;Port=5432;Database=activity;Username=postgres;Password=changeme"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: admin
+      RabbitMQ__Pass: admin123
+    depends_on:
+      activity-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  feed-service:
+    build:
+      context: ./backend/services/FeedService
+      dockerfile: Dockerfile
+    container_name: cinegram-feed-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Jwt__Secret: "your-256-bit-secret-here-minimum-32-chars-CHANGE-IN-PROD"
+      Redis__ConnectionString: "redis:6379"
+      Services__Social: "http://social-service:8080"
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__User: admin
+      RabbitMQ__Pass: admin123
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      social-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: cinegram-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - user-service
+      - catalogue-service
+      - review-service
+      - social-service
+      - activity-service
+      - feed-service
+
+volumes:
+  pgdata-users:
+  pgdata-catalogue:
+  pgdata-reviews:
+  pgdata-social:
+  pgdata-activity:
+  redisdata:
+  rabbitmqdata:

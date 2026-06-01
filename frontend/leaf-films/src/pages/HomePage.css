@@ -1,0 +1,65 @@
+/* Authenticated home */
+.home-auth { max-width: 800px; margin: 0 auto; text-align: center; padding: 4rem 1rem; }
+.home-auth__greeting { font-family: var(--font-serif); font-size: 3rem; margin-bottom: 0.75rem; }
+.home-auth__subtitle { color: var(--text-2); font-size: 1.1rem; margin-bottom: 3rem; }
+.home-auth__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.home-auth__card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1rem;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--transition), transform var(--transition);
+}
+.home-auth__card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.home-auth__card-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.home-auth__card-label { font-weight: 600; margin-bottom: 0.2rem; }
+.home-auth__card-desc { font-size: 0.8125rem; color: var(--text-3); }
+
+/* Landing */
+.home-landing { max-width: 700px; margin: 0 auto; padding: 5rem 1rem; text-align: center; }
+.home-landing__eyebrow {
+  color: var(--accent);
+  font-size: 0.875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.home-landing__title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+.home-landing__title em { color: var(--accent); }
+.home-landing__subtitle {
+  color: var(--text-2);
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin: 0 auto 2.5rem;
+  max-width: 480px;
+}
+.home-landing__cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.home-landing__features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 5rem;
+}
+.home-landing__feature {
+  padding: 1.5rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: left;
+}
+.home-landing__feature-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
+.home-landing__feature-title { font-weight: 600; margin-bottom: 0.4rem; }
+.home-landing__feature-desc { color: var(--text-2); font-size: 0.875rem; line-height: 1.6; }

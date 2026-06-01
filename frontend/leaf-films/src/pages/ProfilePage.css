@@ -1,0 +1,85 @@
+.profile-page { max-width: 720px; margin: 0 auto; }
+
+.profile-header {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.profile-header__info { flex: 1; }
+.profile-header__name { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+.profile-header__meta { color: var(--text-2); font-size: 0.875rem; margin-bottom: 1rem; }
+.profile-header__stats { display: flex; gap: 1.5rem; }
+.profile-header__stat { font-size: 0.875rem; color: var(--text-2); }
+.profile-header__stat strong { color: var(--text); }
+
+/* Tabs */
+.profile-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.profile-tabs__btn {
+  padding: 0.6rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-2);
+  font-weight: 400;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color var(--transition);
+  margin-bottom: -1px;
+}
+.profile-tabs__btn--active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+}
+.profile-tabs__count { color: var(--text-3); font-weight: 400; }
+
+/* Review item */
+.profile-review {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+.profile-review:hover { border-color: var(--accent); }
+.profile-review__top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.profile-review__movie { font-weight: 600; }
+.profile-review__score { color: var(--accent); font-weight: 700; }
+.profile-review__text { color: var(--text-2); font-size: 0.875rem; line-height: 1.5; }
+.profile-review__date { font-size: 0.75rem; color: var(--text-3); margin-top: 0.5rem; }
+
+/* User item */
+.profile-user {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+.profile-user:hover { border-color: var(--accent); }
+.profile-user__name { font-weight: 600; }
+.profile-user__date { font-size: 0.75rem; color: var(--text-3); }
+.profile-user__arrow { margin-left: auto; color: var(--accent); font-size: 0.875rem; }
+
+.profile-list { display: flex; flex-direction: column; gap: 1rem; }
+.profile-user-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.profile-empty { color: var(--text-3); text-align: center; padding: 2rem; }
