@@ -1,13 +1,11 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace ReviewService.Migrations
 {
-    /// <inheritdoc />
     public partial class AddReviewImageUrl : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
@@ -17,8 +15,6 @@ namespace ReviewService.Migrations
                 maxLength: 1000,
                 nullable: true);
         }
-
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
@@ -27,3 +23,4 @@ namespace ReviewService.Migrations
         }
     }
 }
+

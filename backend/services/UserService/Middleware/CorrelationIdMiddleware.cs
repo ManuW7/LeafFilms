@@ -17,8 +17,6 @@ public class CorrelationIdMiddleware
 
         context.Items["CorrelationId"] = correlationId.ToString();
         context.Response.Headers[HeaderName] = correlationId.ToString();
-
-        // Make it available in Serilog log context
         using (Serilog.Context.LogContext.PushProperty("CorrelationId", correlationId.ToString()))
         {
             await _next(context);

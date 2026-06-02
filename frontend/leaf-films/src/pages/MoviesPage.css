@@ -1,4 +1,4 @@
-.movies-page__header {
+﻿.movies-page__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,7 +43,7 @@
   gap: 1.25rem;
 }
 
-/* Movie card */
+
 .movie-card {
   background: var(--bg-2);
   border: 1px solid var(--border);
@@ -88,3 +88,4 @@
 .movie-card__rating-star { color: var(--accent); font-size: 0.875rem; }
 .movie-card__rating-value { font-size: 0.875rem; font-weight: 600; }
 .movie-card__rating-count { font-size: 0.75rem; color: var(--text-3); }
+

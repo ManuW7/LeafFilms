@@ -12,8 +12,6 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
 
     public UsersController(IUserService userService) => _userService = userService;
-
-    /// <summary>Регистрация нового пользователя</summary>
     [HttpPost("register")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -22,8 +20,6 @@ public class UsersController : ControllerBase
         var result = await _userService.RegisterAsync(cmd);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
-
-    /// <summary>Аутентификация — возвращает JWT</summary>
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -32,8 +28,6 @@ public class UsersController : ControllerBase
         var result = await _userService.LoginAsync(cmd);
         return Ok(result);
     }
-
-    /// <summary>Сделать существующего пользователя админом через setup secret</summary>
     [HttpPost("admin/promote")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -42,8 +36,6 @@ public class UsersController : ControllerBase
         var result = await _userService.PromoteToAdminAsync(cmd);
         return Ok(result);
     }
-
-    /// <summary>Поиск пользователей по username</summary>
     [HttpGet("search")]
     [Authorize]
     public async Task<IActionResult> Search([FromQuery] string q)
@@ -53,8 +45,6 @@ public class UsersController : ControllerBase
         var result = await _userService.SearchAsync(q);
         return Ok(result);
     }
-
-    /// <summary>Получить профиль пользователя по ID</summary>
     [HttpGet("{id:guid}")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -64,8 +54,6 @@ public class UsersController : ControllerBase
         var result = await _userService.GetByIdAsync(id);
         return Ok(result);
     }
-
-    /// <summary>Профиль текущего авторизованного пользователя</summary>
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> Me()
@@ -79,3 +67,4 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 }
+

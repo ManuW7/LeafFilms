@@ -104,8 +104,6 @@ public class ReviewAppService : IReviewService
         review.UpdatedAt = DateTime.UtcNow;
 
         var updated = await _repo.UpdateAsync(review);
-
-        // Публикуем событие только если рейтинг изменился
         if (cmd.Rating.HasValue && oldRating != cmd.Rating.Value)
         {
             await _publisher.PublishAsync("review.updated", new ReviewUpdatedEvent
@@ -189,3 +187,4 @@ public class ReviewAppService : IReviewService
         CreatedAt = r.CreatedAt
     };
 }
+

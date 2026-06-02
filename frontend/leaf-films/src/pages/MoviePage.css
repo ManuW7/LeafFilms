@@ -1,4 +1,4 @@
-.movie-page { max-width: 860px; margin: 0 auto; }
+﻿.movie-page { max-width: 860px; margin: 0 auto; }
 
 .movie-page__header {
   display: grid;
@@ -77,7 +77,7 @@
 .admin-movie-panel textarea { width: 100%; resize: vertical; }
 .admin-movie-panel__actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; }
 
-/* Review form */
+
 .review-form {
   background: var(--bg-2);
   border: 1px solid var(--border);
@@ -115,14 +115,14 @@
   font-size: 0.875rem;
 }
 
-/* Reviews list */
+
 .reviews-heading { font-weight: 600; margin-bottom: 1rem; }
 .reviews-heading__count { color: var(--text-3); font-weight: 400; }
 .reviews-empty { text-align: center; padding: 3rem; color: var(--text-3); }
 .reviews-empty__icon { font-size: 2rem; margin-bottom: 0.5rem; }
 .reviews-list { display: flex; flex-direction: column; gap: 1rem; }
 
-/* Review card */
+
 .review-card {
   background: var(--bg-2);
   border: 1px solid var(--border);
@@ -167,3 +167,4 @@
   color: var(--text);
 }
 .review-card__confirm div { display: flex; gap: 0.5rem; }
+

@@ -26,18 +26,14 @@ public class FeedController : ControllerBase
 
     private Guid CurrentUserId => Guid.Parse(
         User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value!);
-
-    /// <summary>Лента событий текущего пользователя (из Redis)</summary>
     [HttpGet]
     public async Task<IActionResult> GetFeed([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         var items = await _feedService.GetFeedAsync(CurrentUserId, page, pageSize);
         return Ok(items);
     }
-
-    /// <summary>WebSocket endpoint для real-time уведомлений ленты</summary>
     [HttpGet("/ws/feed")]
-    [AllowAnonymous] // JWT передаётся как query param, т.к. WS не поддерживает заголовки в браузере
+    [AllowAnonymous]
     public async Task ConnectWebSocket([FromQuery] string? token)
     {
         if (!HttpContext.WebSockets.IsWebSocketRequest)
@@ -46,8 +42,6 @@ public class FeedController : ControllerBase
             await HttpContext.Response.WriteAsync("WebSocket connection expected.");
             return;
         }
-
-        // Извлекаем userId из токена (передаётся как ?token=...)
         Guid userId;
         if (!TryGetUserIdFromToken(token, out userId))
         {

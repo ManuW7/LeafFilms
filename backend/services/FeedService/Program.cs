@@ -1,4 +1,4 @@
-using FeedService.Events;
+﻿using FeedService.Events;
 using FeedService.Middleware;
 using FeedService.Services;
 using FeedService.WebSockets;
@@ -19,12 +19,8 @@ builder.Host.UseSerilog((ctx, cfg) =>
        .Enrich.WithProperty("Service", "feed-service")
        .Enrich.FromLogContext()
        .WriteTo.Console(new CompactJsonFormatter()));
-
-// ── Redis ─────────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"]!));
-
-// ── JWT ───────────────────────────────────────────────────────────────────────
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
@@ -39,8 +35,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-
-// ── SocialClient с Polly ──────────────────────────────────────────────────────
 var retryPolicy = HttpPolicyExtensions
     .HandleTransientHttpError()
     .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
@@ -50,8 +44,6 @@ builder.Services.AddHttpClient<ISocialClient, SocialClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["Services:Social"]!);
     client.Timeout = TimeSpan.FromSeconds(10);
 }).AddPolicyHandler(retryPolicy);
-
-// ── Application Services ──────────────────────────────────────────────────────
 builder.Services.AddSingleton<FeedWebSocketManager>();
 builder.Services.AddScoped<IFeedService, RedisFeedService>();
 builder.Services.AddHostedService<FeedEventConsumer>();

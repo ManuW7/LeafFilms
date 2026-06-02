@@ -1,4 +1,4 @@
-.activity-page__title { font-family: var(--font-serif); font-size: 2rem; margin-bottom: 1.5rem; }
+﻿.activity-page__title { font-family: var(--font-serif); font-size: 2rem; margin-bottom: 1.5rem; }
 
 .activity-tabs {
   display: flex;
@@ -24,7 +24,7 @@
 }
 .activity-tabs__count { color: var(--text-3); font-weight: 400; }
 
-/* List items */
+
 .activity-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .activity-item {
   display: flex;
@@ -43,7 +43,7 @@
 .activity-item__title { font-weight: 500; }
 .activity-item__date { font-size: 0.8125rem; color: var(--text-3); }
 
-/* Watchlist item (no full click) */
+
 .watchlist-item {
   display: flex;
   align-items: center;
@@ -58,7 +58,7 @@
 .watchlist-item__title { font-weight: 500; }
 .watchlist-item__added { font-size: 0.75rem; color: var(--text-3); }
 
-/* Playlists */
+
 .playlist-create {
   display: flex;
   gap: 0.75rem;
@@ -123,3 +123,4 @@
 .playlist-card__movie:hover { color: var(--text); }
 
 .activity-empty { color: var(--text-3); text-align: center; padding: 3rem; }
+

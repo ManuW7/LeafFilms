@@ -8,8 +8,6 @@ using RabbitMQ.Client.Events;
 
 namespace FeedService.Events;
 
-// ── Incoming event shapes ─────────────────────────────────────────────────────
-
 public class ReviewCreatedEvent
 {
     public Guid ReviewId { get; set; }
@@ -37,8 +35,6 @@ public class ReviewDeletedEvent
     public Guid ReviewId { get; set; }
     public Guid UserId { get; set; }
 }
-
-// ── Consumer background service ───────────────────────────────────────────────
 
 public class FeedEventConsumer : BackgroundService
 {
@@ -138,8 +134,6 @@ public class FeedEventConsumer : BackgroundService
         };
 
         await feedService.PushToManyAsync(followerIds, feedItem);
-
-        // Уведомляем по WebSocket
         await _wsManager.BroadcastToUsersAsync(followerIds, new
         {
             type = "review_created",
@@ -215,3 +209,4 @@ public class FeedEventConsumer : BackgroundService
         base.Dispose();
     }
 }
+

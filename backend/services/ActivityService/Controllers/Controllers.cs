@@ -9,8 +9,6 @@ using System.Security.Claims;
 
 namespace ActivityService.Controllers;
 
-// ── Watch History ─────────────────────────────────────────────────────────────
-
 [ApiController]
 [Route("history")]
 [Authorize]
@@ -82,8 +80,6 @@ public class HistoryController : ControllerBase
     }
 }
 
-// ── Watchlist ─────────────────────────────────────────────────────────────────
-
 [ApiController]
 [Route("watchlist")]
 [Authorize]
@@ -142,8 +138,6 @@ public class WatchlistController : ControllerBase
         return NoContent();
     }
 }
-
-// ── Playlists ─────────────────────────────────────────────────────────────────
 
 [ApiController]
 [Route("playlists")]
@@ -230,3 +224,4 @@ public class PlaylistsController : ControllerBase
         }).ToList()
     };
 }
+

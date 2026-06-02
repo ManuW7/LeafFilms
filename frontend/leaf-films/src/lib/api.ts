@@ -1,4 +1,4 @@
-function getToken(): string | null {
+﻿function getToken(): string | null {
   return localStorage.getItem("token");
 }
 
@@ -41,12 +41,7 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
-    let errorData: { error?: string; [key: string]: unknown } = {};
-    try {
-      errorData = await res.json();
-    } catch {
-      // Some endpoints return an empty error body.
-    }
+    const errorData = await res.json().catch(() => ({} as { error?: string; [key: string]: unknown }));
     const err = new ApiError(errorData?.error || `HTTP ${res.status}`);
     err.data = errorData;
     throw err;
@@ -58,3 +53,4 @@ export async function apiFetch<T>(
 
   return res.json() as Promise<T>;
 }
+

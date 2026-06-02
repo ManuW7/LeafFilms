@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ActivityService.Repositories;
 
-// ── Watch History ─────────────────────────────────────────────────────────────
-
 public interface IWatchHistoryRepository
 {
     Task<IEnumerable<WatchHistory>> GetByUserAsync(Guid userId);
@@ -31,8 +29,6 @@ public class WatchHistoryRepository : IWatchHistoryRepository
     public async Task<WatchHistory> AddAsync(WatchHistory entry)
     { _db.WatchHistory.Add(entry); await _db.SaveChangesAsync(); return entry; }
 }
-
-// ── Watchlist ─────────────────────────────────────────────────────────────────
 
 public interface IWatchlistRepository
 {
@@ -66,8 +62,6 @@ public class WatchlistRepository : IWatchlistRepository
         if (item is not null) { _db.WatchlistItems.Remove(item); await _db.SaveChangesAsync(); }
     }
 }
-
-// ── Playlists ─────────────────────────────────────────────────────────────────
 
 public interface IPlaylistRepository
 {
@@ -118,3 +112,4 @@ public class PlaylistRepository : IPlaylistRepository
         if (pm is not null) { _db.PlaylistMovies.Remove(pm); await _db.SaveChangesAsync(); }
     }
 }
+

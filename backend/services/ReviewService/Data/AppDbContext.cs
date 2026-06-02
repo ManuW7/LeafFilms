@@ -16,10 +16,10 @@ public class AppDbContext : DbContext
             e.HasKey(r => r.Id);
             e.HasIndex(r => r.MovieId);
             e.HasIndex(r => r.UserId);
-            // Один пользователь — один отзыв на фильм
             e.HasIndex(r => new { r.UserId, r.MovieId }).IsUnique();
             e.Property(r => r.Text).HasMaxLength(2000);
             e.Property(r => r.ImageUrl).HasMaxLength(1000);
         });
     }
 }
+

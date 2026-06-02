@@ -1,7 +1,5 @@
-import React, { createContext, useContext, useEffect, useReducer } from 'react'
+﻿import React, { createContext, useContext, useEffect, useReducer } from 'react'
 import type { User } from '../types'
-
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthState {
   user: User | null
   token: string | null
@@ -16,8 +14,6 @@ interface AuthContextValue extends AuthState {
   setAuth: (user: User, token: string) => void
   logout: () => void
 }
-
-// ── Reducer ───────────────────────────────────────────────────────────────────
 function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case 'SET_AUTH':
@@ -42,8 +38,6 @@ function getInitialState(): AuthState {
   }
   return { user: null, token: null, isAuth: false }
 }
-
-// ── Context ───────────────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -73,10 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     children
   )
 }
-
-// ── Hook ──────────────────────────────────────────────────────────────────────
 export function useAuthStore(): AuthContextValue {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuthStore must be used within AuthProvider')
   return ctx
 }
+

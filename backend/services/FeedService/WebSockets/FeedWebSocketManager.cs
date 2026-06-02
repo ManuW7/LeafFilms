@@ -7,7 +7,6 @@ namespace FeedService.WebSockets;
 
 public class FeedWebSocketManager
 {
-    // userId -> список открытых соединений
     private readonly ConcurrentDictionary<Guid, ConcurrentBag<WebSocket>> _connections = new();
     private readonly ILogger<FeedWebSocketManager> _logger;
 
@@ -49,8 +48,6 @@ public class FeedWebSocketManager
                 dead.Add(ws);
             }
         }
-
-        // Очищаем мёртвые соединения
         foreach (var ws in dead)
         {
             var remaining = bag.Where(x => x != ws).ToList();
@@ -63,8 +60,6 @@ public class FeedWebSocketManager
         var tasks = userIds.Select(id => SendToUserAsync(id, payload));
         await Task.WhenAll(tasks);
     }
-
-    /// <summary>Держит соединение открытым, пока клиент не отключится.</summary>
     public async Task ListenAsync(Guid userId, WebSocket ws)
     {
         var buffer = new byte[1024];

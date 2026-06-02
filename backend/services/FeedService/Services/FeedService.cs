@@ -16,7 +16,7 @@ public class RedisFeedService : IFeedService
 {
     private readonly IConnectionMultiplexer _redis;
     private readonly ILogger<RedisFeedService> _logger;
-    private const int MaxFeedLength = 200;  // храним максимум 200 событий на пользователя
+    private const int MaxFeedLength = 200;
 
     public RedisFeedService(IConnectionMultiplexer redis, ILogger<RedisFeedService> logger)
     {
@@ -44,12 +44,8 @@ public class RedisFeedService : IFeedService
         var db = _redis.GetDatabase();
         var key = $"feed:{userId}";
         var json = JsonSerializer.Serialize(item);
-
-        // Добавляем в начало списка (новые сверху)
         await db.ListLeftPushAsync(key, json);
-        // Обрезаем до максимума
         await db.ListTrimAsync(key, 0, MaxFeedLength - 1);
-        // TTL 30 дней
         await db.KeyExpireAsync(key, TimeSpan.FromDays(30));
 
         _logger.LogDebug("Pushed feed item to user {UserId}", userId);
@@ -79,3 +75,4 @@ public class RedisFeedService : IFeedService
         }
     }
 }
+

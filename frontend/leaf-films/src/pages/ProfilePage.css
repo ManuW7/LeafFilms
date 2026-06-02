@@ -1,4 +1,4 @@
-.profile-page { max-width: 720px; margin: 0 auto; }
+﻿.profile-page { max-width: 720px; margin: 0 auto; }
 
 .profile-header {
   display: flex;
@@ -17,7 +17,7 @@
 .profile-header__stat { font-size: 0.875rem; color: var(--text-2); }
 .profile-header__stat strong { color: var(--text); }
 
-/* Tabs */
+
 .profile-tabs {
   display: flex;
   gap: 0.25rem;
@@ -43,7 +43,7 @@
 }
 .profile-tabs__count { color: var(--text-3); font-weight: 400; }
 
-/* Review item */
+
 .profile-review {
   background: var(--bg-2);
   border: 1px solid var(--border);
@@ -71,7 +71,7 @@
 }
 .profile-review__date { font-size: 0.75rem; color: var(--text-3); margin-top: 0.5rem; }
 
-/* User item */
+
 .profile-user {
   display: flex;
   align-items: center;
@@ -91,3 +91,4 @@
 .profile-list { display: flex; flex-direction: column; gap: 1rem; }
 .profile-user-list { display: flex; flex-direction: column; gap: 0.75rem; }
 .profile-empty { color: var(--text-3); text-align: center; padding: 2rem; }
+

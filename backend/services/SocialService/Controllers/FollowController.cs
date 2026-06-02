@@ -24,8 +24,6 @@ public class FollowController : ControllerBase
         ?? throw new UnauthorizedAccessException());
 
     private string CurrentUsername => User.FindFirst(ClaimTypes.Name)?.Value ?? "unknown";
-
-    /// <summary>Подписаться на пользователя</summary>
     [HttpPost("follow")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -60,8 +58,6 @@ public class FollowController : ControllerBase
             CreatedAt = created.CreatedAt
         });
     }
-
-    /// <summary>Отписаться от пользователя</summary>
     [HttpDelete("follow")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Unfollow([FromBody] FollowCommand cmd)
@@ -70,8 +66,6 @@ public class FollowController : ControllerBase
         await _repo.DeleteAsync(followerId, cmd.FollowedId);
         return NoContent();
     }
-
-    /// <summary>Подписчики пользователя</summary>
     [HttpGet("users/{userId:guid}/followers")]
     [AllowAnonymous]
     public async Task<IActionResult> GetFollowers(Guid userId)
@@ -98,3 +92,4 @@ public class FollowController : ControllerBase
         }));
     }
 }
+

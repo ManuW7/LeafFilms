@@ -135,8 +135,6 @@ public class ReviewCreatedConsumer : BackgroundService
 
         var movie = await db.Movies.FirstOrDefaultAsync(m => m.Id == evt.MovieId);
         if (movie is null || movie.ReviewCount == 0) return;
-
-        // Пересчёт: убираем старый рейтинг, добавляем новый
         movie.AverageRating = Math.Round(
             (movie.AverageRating * movie.ReviewCount - evt.OldRating + evt.NewRating) / (double)movie.ReviewCount, 2);
 
@@ -193,3 +191,4 @@ public class ReviewCreatedConsumer : BackgroundService
         base.Dispose();
     }
 }
+
